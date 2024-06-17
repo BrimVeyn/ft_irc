@@ -167,6 +167,33 @@ void IRCServer::handleClient(int clientSocket) {
             std::string channel;
             lineStream >> channel;
             handleJoinCommand(clientSocket, channel);
+        } else if (command == "PART") {
+            std::string channel;
+            lineStream >> channel;
+            handlePartCommand(clientSocket, channel);
+        } else if (command == "PRIVMSG") {
+            std::string target;
+            lineStream >> target;
+            std::string privmsg;
+            std::getline(lineStream, privmsg);
+            handlePrivmsgCommand(clientSocket, target, privmsg);
+        } else if (command == "KICK") {
+            std::string channel, user;
+            lineStream >> channel >> user;
+            handleKickCommand(clientSocket, channel, user);
+        } else if (command == "INVITE") {
+            std::string channel, user;
+            lineStream >> channel >> user;
+            handleInviteCommand(clientSocket, channel, user);
+        } else if (command == "TOPIC") {
+            std::string channel, topic;
+            lineStream >> channel;
+            std::getline(lineStream, topic);
+            handleTopicCommand(clientSocket, channel, topic);
+        } else if (command == "MODE") {
+            std::string channel, mode;
+            lineStream >> channel >> mode;
+            handleModeCommand(clientSocket, channel, mode);
         } else if (command == "CAP") {
             std::string subcommand;
             lineStream >> subcommand;
@@ -177,16 +204,19 @@ void IRCServer::handleClient(int clientSocket) {
                 std::cout << "CAP negotiation ended for client " << clientSocket << std::endl;
             }
         } else {
-            // Broadcast the message to all other clients
-            broadcastMessage(clientSocket, line);
+            // Broadcast the message to all other clients in the same channel
+            std::string channel = channels_[clientSocket];
+            broadcastMessage(clientSocket, line, channel);
         }
     }
 }
 
-void IRCServer::broadcastMessage(int senderSocket, const std::string& message) {
+void IRCServer::broadcastMessage(int senderSocket, const std::string& message, const std::string& channel) {
+    std::cout << "Broadcasting message from client " << senderSocket << " in channel " << channel << ": " << message << std::endl;
     for (size_t i = 0; i < clients_.size(); ++i) {
         int clientSocket = clients_[i];
-        if (clientSocket != senderSocket) {
+        if (clientSocket != senderSocket && channels_[clientSocket] == channel) {
+            std::cout << "Sending message to client " << clientSocket << " in channel " << channel << std::endl;
             if (send(clientSocket, message.c_str(), message.size(), 0) == -1) {
                 std::cerr << "Failed to send message to client " << clientSocket << ": " << strerror(errno) << std::endl;
                 closeSocket(clientSocket);
@@ -228,5 +258,61 @@ void IRCServer::handleJoinCommand(int clientSocket, const std::string& channel) 
     std::cout << "Handling JOIN command for client " << clientSocket << " for channel " << channel << std::endl;
     send(clientSocket, response.c_str(), response.size(), 0);
     std::string joinMessage = ":" + nicknames_[clientSocket] + "!" + usernames_[clientSocket] + "@localhost JOIN " + channel + "\r\n";
-    broadcastMessage(clientSocket, joinMessage);
+    broadcastMessage(clientSocket, joinMessage, channel);
+}
+
+void IRCServer::handlePrivmsgCommand(int clientSocket, const std::string& target, const std::string& message) {
+    std::string channel = channels_[clientSocket];
+    std::string formattedMessage = ":" + nicknames_[clientSocket] + " PRIVMSG " + target + " :" + message + "\r\n";
+    broadcastMessage(clientSocket, formattedMessage, channel);
+}
+
+void IRCServer::handlePartCommand(int clientSocket, const std::string& channel) {
+    if (channels_[clientSocket] == channel) {
+        std::string response = ":" + nicknames_[clientSocket] + " PART " + channel + "\r\n";
+        std::cout << "Handling PART command for client " << clientSocket << " for channel " << channel << std::endl;
+        broadcastMessage(clientSocket, response, channel);
+        channels_.erase(clientSocket);
+    }
+}
+
+void IRCServer::handleKickCommand(int clientSocket, const std::string& channel, const std::string& user) {
+    if (channels_[clientSocket] == channel) {
+        // Rechercher le client avec le pseudonyme donné et le retirer du canal
+        for (std::map<int, std::string>::iterator it = channels_.begin(); it != channels_.end(); ++it) {
+            if (it->second == channel && nicknames_[it->first] == user) {
+                std::string response = ":" + nicknames_[clientSocket] + " KICK " + channel + " " + user + " :Kicked by operator\r\n";
+                send(it->first, response.c_str(), response.size(), 0);
+                channels_.erase(it);
+                return;
+            }
+        }
+    }
+}
+
+void IRCServer::handleInviteCommand(int clientSocket, const std::string& channel, const std::string& user) {
+    if (channels_[clientSocket] == channel) {
+        // Rechercher le client avec le pseudonyme donné et l'inviter
+        for (std::map<int, std::string>::iterator it = nicknames_.begin(); it != nicknames_.end(); ++it) {
+            if (it->second == user) {
+                std::string response = ":" + nicknames_[clientSocket] + " INVITE " + user + " " + channel + "\r\n";
+                send(it->first, response.c_str(), response.size(), 0);
+                return;
+            }
+        }
+    }
+}
+
+void IRCServer::handleTopicCommand(int clientSocket, const std::string& channel, const std::string& topic) {
+    if (channels_[clientSocket] == channel) {
+        topics_[channel] = topic;
+        std::string response = ":" + nicknames_[clientSocket] + " TOPIC " + channel + " :" + topic + "\r\n";
+        broadcastMessage(clientSocket, response, channel);
+    }
+}
+
+void IRCServer::handleModeCommand(int clientSocket, const std::string& channel, const std::string& mode) {
+    // Mode handling implementation goes here
+    std::string response = ":" + nicknames_[clientSocket] + " MODE " + channel + " " + mode + "\r\n";
+    broadcastMessage(clientSocket, response, channel);
 }
