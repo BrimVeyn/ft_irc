@@ -1,17 +1,4 @@
 #include "../include/IRCServer.hpp"
-#include <cstdlib>
-#include <iostream>
-#include <sstream>
-#include <cstring>
-#include <cerrno>
-#include <unistd.h>
-#include <sys/types.h>
-#include <algorithm>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <fcntl.h>
-#include <poll.h>
 
 // Classe de comparaison pour remove_if
 class FdComparator {
@@ -25,7 +12,20 @@ private:
 };
 
 IRCServer::IRCServer(int port, const std::string& password)
-    : port_(port), password_(password), serverSocket_(-1) {}
+    : port_(port), password_(password), serverSocket_(-1) {
+
+    commandMap_["NICK"] = &IRCServer::handleNickCommand;
+    commandMap_["USER"] = &IRCServer::handleUserCommand;
+    commandMap_["JOIN"] = &IRCServer::handleJoinCommand;
+    commandMap_["PART"] = &IRCServer::handlePartCommand;
+    commandMap_["PRIVMSG"] = &IRCServer::handlePrivmsgCommand;
+    commandMap_["KICK"] = &IRCServer::handleKickCommand;
+    commandMap_["INVITE"] = &IRCServer::handleInviteCommand;
+    commandMap_["TOPIC"] = &IRCServer::handleTopicCommand;
+    commandMap_["MODE"] = &IRCServer::handleModeCommand;
+    commandMap_["CAP"] = &IRCServer::handleCapCommand;
+    commandMap_["PASS"] = &IRCServer::handlePassCommand;
+}
 
 IRCServer::~IRCServer() {
     if (serverSocket_ != -1) {
@@ -116,101 +116,6 @@ void IRCServer::acceptConnections() {
     }
 }
 
-void IRCServer::handleClient(int clientSocket) {
-    char buffer[512];
-    std::memset(buffer, 0, sizeof(buffer));
-
-    int bytesReceived = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
-    if (bytesReceived == -1) {
-        std::cerr << "Failed to receive data: " << strerror(errno) << std::endl;
-        closeSocket(clientSocket);
-        return;
-    } else if (bytesReceived == 0) {
-        // Client disconnected
-        std::cerr << "Client disconnected: " << clientSocket << std::endl;
-        closeSocket(clientSocket);
-        return;
-    }
-
-    std::string message(buffer, bytesReceived);
-    std::cout << "Received message from client " << clientSocket << ": " << message << std::endl;
-
-    // Split the message into lines
-    std::istringstream iss(message);
-    std::string line;
-    while (std::getline(iss, line)) {
-        if (line.empty()) {
-            continue;
-        }
-        // Remove any trailing '\r'
-        if (!line.empty() && line[line.size() - 1] == '\r') {
-            line.erase(line.size() - 1);
-        }
-        std::cout << "Processing line: " << line << std::endl;
-
-        // Parse the command
-        std::istringstream lineStream(line);
-        std::string command;
-        lineStream >> command;
-
-        std::cout << "Command received: " << command << std::endl;
-
-        if (command == "NICK") {
-            std::string nickname;
-            lineStream >> nickname;
-            handleNickCommand(clientSocket, nickname);
-        } else if (command == "USER") {
-            std::string userInfo;
-            std::getline(lineStream, userInfo);
-            handleUserCommand(clientSocket, userInfo);
-        } else if (command == "JOIN") {
-            std::string channel;
-            lineStream >> channel;
-            handleJoinCommand(clientSocket, channel);
-        } else if (command == "PART") {
-            std::string channel;
-            lineStream >> channel;
-            handlePartCommand(clientSocket, channel);
-        } else if (command == "PRIVMSG") {
-            std::string target;
-            lineStream >> target;
-            std::string privmsg;
-            std::getline(lineStream, privmsg);
-            handlePrivmsgCommand(clientSocket, target, privmsg);
-        } else if (command == "KICK") {
-            std::string channel, user;
-            lineStream >> channel >> user;
-            handleKickCommand(clientSocket, channel, user);
-        } else if (command == "INVITE") {
-            std::string channel, user;
-            lineStream >> channel >> user;
-            handleInviteCommand(clientSocket, channel, user);
-        } else if (command == "TOPIC") {
-            std::string channel, topic;
-            lineStream >> channel;
-            std::getline(lineStream, topic);
-            handleTopicCommand(clientSocket, channel, topic);
-        } else if (command == "MODE") {
-            std::string channel, mode;
-            lineStream >> channel >> mode;
-            handleModeCommand(clientSocket, channel, mode);
-        } else if (command == "CAP") {
-            std::string subcommand;
-            lineStream >> subcommand;
-            if (subcommand == "LS" || subcommand == "LIST") {
-                std::string response = "CAP * LS :\r\n";
-                send(clientSocket, response.c_str(), response.size(), 0);
-            } else if (subcommand == "END") {
-                std::cout << "CAP negotiation ended for client " << clientSocket << std::endl;
-            }
-        } else {
-            // Broadcast the message to all other clients in the same channel
-            std::string channel = channels_[clientSocket];
-            broadcastMessage(clientSocket, line, channel);
-        }
-    }
-}
-
 void IRCServer::broadcastMessage(int senderSocket, const std::string& message, const std::string& channel) {
     std::cout << "Broadcasting message from client " << senderSocket << " in channel " << channel << ": " << message << std::endl;
     for (size_t i = 0; i < clients_.size(); ++i) {
@@ -235,84 +140,58 @@ void IRCServer::closeSocket(int socket) {
     std::cout << "Client disconnected: " << socket << std::endl;
 }
 
+void IRCServer::handleCmds(std::string message, int clientSocket) {
 
-// Gestion de la commande USER
-void IRCServer::handleUserCommand(int clientSocket, const std::string& userInfo) {
-    usernames_[clientSocket] = userInfo;
-    std::string response = ":localhost 001 " + nicknames_[clientSocket] + " :Welcome to the IRC server\r\n";
-    std::cout << "Handling USER command for client " << clientSocket << " with user info " << userInfo << std::endl;
-    send(clientSocket, response.c_str(), response.size(), 0);
+    // Split the message into lines
+    std::istringstream iss(message);
+    std::string line;
+
+	while (std::getline(iss, line)) {
+		if (line.empty())
+			continue;
+		// Remove any trailing '\r'
+		if (!line.empty() && line[line.size() - 1] == '\r') {
+			line.erase(line.size() - 1);
+		}
+		std::cout << "Processing line: " << line << std::endl;
+
+		// Parse the command
+		std::istringstream lineStream(line);
+		std::string command;
+		lineStream >> command;
+
+		std::map<std::string, CommandHandler>::iterator it = commandMap_.find(command);
+		if (it != commandMap_.end()) {
+			CommandHandler handler = it->second;
+			(this->*handler)(clientSocket, lineStream);
+		} else {
+			std::string channel = channels_[clientSocket];
+			broadcastMessage(clientSocket, line, channel);
+		}
+	}
 }
 
-// Gestion de la commande NICK
-void IRCServer::handleNickCommand(int clientSocket, const std::string& nickname) {
-    nicknames_[clientSocket] = nickname;
-    std::string response = ":" + nickname + " NICK " + nickname + "\r\n";
-    std::cout << "Handling NICK command for client " << clientSocket << " with nickname " << nickname << std::endl;
-    send(clientSocket, response.c_str(), response.size(), 0);
-}
+void IRCServer::handleClient(int clientSocket) {
+    char buffer[512];
+    std::memset(buffer, 0, sizeof(buffer));
 
-void IRCServer::handleJoinCommand(int clientSocket, const std::string& channel) {
-    channels_[clientSocket] = channel;
-    std::string response = ":" + nicknames_[clientSocket] + " JOIN " + channel + "\r\n";
-    std::cout << "Handling JOIN command for client " << clientSocket << " for channel " << channel << std::endl;
-    send(clientSocket, response.c_str(), response.size(), 0);
-    std::string joinMessage = ":" + nicknames_[clientSocket] + "!" + usernames_[clientSocket] + "@localhost JOIN " + channel + "\r\n";
-    broadcastMessage(clientSocket, joinMessage, channel);
-}
-
-void IRCServer::handlePrivmsgCommand(int clientSocket, const std::string& target, const std::string& message) {
-    std::string channel = channels_[clientSocket];
-    std::string formattedMessage = ":" + nicknames_[clientSocket] + " PRIVMSG " + target + " :" + message + "\r\n";
-    broadcastMessage(clientSocket, formattedMessage, channel);
-}
-
-void IRCServer::handlePartCommand(int clientSocket, const std::string& channel) {
-    if (channels_[clientSocket] == channel) {
-        std::string response = ":" + nicknames_[clientSocket] + " PART " + channel + "\r\n";
-        std::cout << "Handling PART command for client " << clientSocket << " for channel " << channel << std::endl;
-        broadcastMessage(clientSocket, response, channel);
-        channels_.erase(clientSocket);
+    int bytesReceived = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
+    if (bytesReceived == -1) {
+        std::cerr << "Failed to receive data: " << strerror(errno) << std::endl;
+        closeSocket(clientSocket);
+        return;
+    } else if (bytesReceived == 0) {
+        // Client disconnected
+        std::cerr << "Client disconnected: " << clientSocket << std::endl;
+        closeSocket(clientSocket);
+        return;
     }
+
+
+    std::string message(buffer, bytesReceived);
+    std::cout << "Received message from client " << clientSocket << ": " << message << std::endl;
+
+	handleCmds(message, clientSocket);
+    
 }
 
-void IRCServer::handleKickCommand(int clientSocket, const std::string& channel, const std::string& user) {
-    if (channels_[clientSocket] == channel) {
-        // Rechercher le client avec le pseudonyme donné et le retirer du canal
-        for (std::map<int, std::string>::iterator it = channels_.begin(); it != channels_.end(); ++it) {
-            if (it->second == channel && nicknames_[it->first] == user) {
-                std::string response = ":" + nicknames_[clientSocket] + " KICK " + channel + " " + user + " :Kicked by operator\r\n";
-                send(it->first, response.c_str(), response.size(), 0);
-                channels_.erase(it);
-                return;
-            }
-        }
-    }
-}
-
-void IRCServer::handleInviteCommand(int clientSocket, const std::string& channel, const std::string& user) {
-    if (channels_[clientSocket] == channel) {
-        // Rechercher le client avec le pseudonyme donné et l'inviter
-        for (std::map<int, std::string>::iterator it = nicknames_.begin(); it != nicknames_.end(); ++it) {
-            if (it->second == user) {
-                std::string response = ":" + nicknames_[clientSocket] + " INVITE " + user + " " + channel + "\r\n";
-                send(it->first, response.c_str(), response.size(), 0);
-                return;
-            }
-        }
-    }
-}
-
-void IRCServer::handleTopicCommand(int clientSocket, const std::string& channel, const std::string& topic) {
-    if (channels_[clientSocket] == channel) {
-        topics_[channel] = topic;
-        std::string response = ":" + nicknames_[clientSocket] + " TOPIC " + channel + " :" + topic + "\r\n";
-        broadcastMessage(clientSocket, response, channel);
-    }
-}
-
-void IRCServer::handleModeCommand(int clientSocket, const std::string& channel, const std::string& mode) {
-    // Mode handling implementation goes here
-    std::string response = ":" + nicknames_[clientSocket] + " MODE " + channel + " " + mode + "\r\n";
-    broadcastMessage(clientSocket, response, channel);
-}

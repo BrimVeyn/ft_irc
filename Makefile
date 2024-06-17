@@ -6,7 +6,7 @@
 #    By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/03/15 11:21:29 by bvan-pae          #+#    #+#              #
-#    Updated: 2024/06/17 11:07:35 by bvan-pae         ###   ########.fr        #
+#    Updated: 2024/06/17 16:49:46 by bvan-pae         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,24 +15,21 @@ CFLAGS  := -Wall -Wextra -Werror -std=c++98
 
 NAME    := ircserv
 
-SRC_DIR := src
-SRC     := $(wildcard $(SRC_DIR)/*.cpp) main.cpp
+SRC     := $(wildcard src/*.cpp) $(wildcard src/cmds/*.cpp) main.cpp
 OBJ_DIR := objects
-OBJ     := $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(notdir $(SRC)))
+OBJ     := $(SRC:src/%.cpp=$(OBJ_DIR)/%.o)
+OBJ_SUBDIRS := $(sort $(dir $(OBJ)))
 
-all : $(NAME)
+all: $(NAME)
 
-$(NAME) : $(OBJ)
+$(NAME): $(OBJ)
 	$(CPP) $(CFLAGS) $(OBJ) -o $(NAME)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp | $(OBJ_DIR)
+$(OBJ_DIR)/%.o: src/%.cpp | $(OBJ_SUBDIRS)
 	$(CPP) $(CFLAGS) -c $< -o $@
 
-$(OBJ_DIR)/%.o: %.cpp | $(OBJ_DIR)
-	$(CPP) $(CFLAGS) -c $< -o $@
-
-$(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
+$(OBJ_SUBDIRS):
+	mkdir -p $@
 
 clean:
 	rm -rf $(OBJ_DIR)
