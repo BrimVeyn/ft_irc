@@ -1,0 +1,41 @@
+Change Nickname:
+:NICKNAME!USER@HOST NICK :NEWNICK
+
+Set User Information:
+USER <username> <hostname> <servername> :<realname>
+
+Join Channel:
+:NICKNAME!USER@HOST JOIN <channel>
+
+Leave Channel:
+:NICKNAME!USER@HOST PART <channel>
+
+Private Message:
+:NICKNAME!USER@HOST PRIVMSG <target> :<message>
+
+Send Notice:
+:NICKNAME!USER@HOST NOTICE <target> :<message>
+
+Kick User:
+:NICKNAME!USER@HOST KICK <channel> <user> :<reason>
+
+Invite User:
+:NICKNAME!USER@HOST INVITE <user> <channel>
+
+Change Topic:
+:NICKNAME!USER@HOST TOPIC <channel> :<topic>
+
+Mode Command:
+:NICKNAME!USER@HOST MODE <channel|user> <modes> <modeparams>
+
+CAP Command:
+:NICKNAME!USER@HOST CAP <subcommand> [<parameters>]
+
+Pass Command:
+PASS <password>
+
+Ping Command:
+PING <server1> [<server2>]
+
+Pong Command:
+PONG <server>

@@ -18,6 +18,18 @@
 #include <fcntl.h>
 #include <poll.h>
 
+#define RESET_COLOR "\033[0m"
+#define BLACK "\033[30m"
+#define RED "\033[31m"
+#define GREEN "\033[32m"
+#define YELLOW "\033[33m"
+#define BLUE "\033[34m"
+#define MAGENTA "\033[35m"
+#define CYAN "\033[36m"
+#define WHITE "\033[37m"
+#define BOLD "\033[1m"
+#define UNDERLINE "\033[4m"
+
 class IRCServer {
 public:
     IRCServer(int port, const std::string& password);
@@ -25,6 +37,15 @@ public:
     void start();
 
 private:
+
+	typedef struct userInfo {
+		std::string nickname;
+		std::string username;
+		std::string server_addr;
+		std::vector<std::string> channels;
+		
+	} userInfo;
+
 	typedef void (IRCServer::*CommandHandler)(int, std::istringstream&);
 
     int port_;
@@ -32,12 +53,11 @@ private:
     int serverSocket_;
     std::vector<int> clients_;
     std::vector<struct pollfd> poll_fds_;
-    std::map<int, std::string> nicknames_; // Map pour stocker les pseudonymes des clients
-    std::map<int, std::string> usernames_; // Map pour stocker les noms d'utilisateurs des clients
-    std::map<int, std::string> channels_;  // Map pour stocker les canaux des clients
+	std::map<int, userInfo>userInfo_;
     std::map<std::string, std::string> topics_;  // Map pour stocker les sujets des channels
 	std::map<std::string, CommandHandler> commandMap_;
 
+	std::string getCommandPrefix(int clientSocket);
     void initializeSocket();
     void acceptConnections();
     void handleClient(int clientSocket);
