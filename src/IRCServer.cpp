@@ -1,4 +1,9 @@
 #include "../include/IRCServer.hpp"
+#include <cstring>
+#include <ostream>
+#include <sstream>
+#include <algorithm>
+#include <sys/socket.h>
 
 // Classe de comparaison pour remove_if
 class FdComparator {
@@ -117,10 +122,15 @@ void IRCServer::acceptConnections() {
 }
 
 void IRCServer::broadcastMessage(int senderSocket, const std::string& message, const std::string& channel) {
-    std::cout << "Broadcasting message from client " << senderSocket << " in channel " << channel << ": " << message << std::endl;
+    std::cout << GREEN "Broadcasting message from client " << senderSocket << " in channel " << channel <<"\n" GREEN << message << std::endl << RESET_COLOR;
     for (size_t i = 0; i < clients_.size(); ++i) {
         int clientSocket = clients_[i];
-        if (clientSocket != senderSocket && channels_[clientSocket] == channel) {
+		// Get the iterator to the vector of channels for the given client
+		std::vector<std::string>& channels = userInfo_[clientSocket].channels;
+
+		// Use std::find to search for the channel
+		std::vector<std::string>::iterator it = std::find(channels.begin(), channels.end(), channel);
+        if (clientSocket != senderSocket && it != channels.end()) {
             std::cout << "Sending message to client " << clientSocket << " in channel " << channel << std::endl;
             if (send(clientSocket, message.c_str(), message.size(), 0) == -1) {
                 std::cerr << "Failed to send message to client " << clientSocket << ": " << strerror(errno) << std::endl;
@@ -130,21 +140,45 @@ void IRCServer::broadcastMessage(int senderSocket, const std::string& message, c
     }
 }
 
-void IRCServer::closeSocket(int socket) {
-    close(socket);
-    poll_fds_.erase(std::remove_if(poll_fds_.begin(), poll_fds_.end(), FdComparator(socket)), poll_fds_.end());
-    clients_.erase(std::remove(clients_.begin(), clients_.end(), socket), clients_.end());
-    nicknames_.erase(socket); // Remove nickname
-    usernames_.erase(socket); // Remove username
-    channels_.erase(socket);  // Remove channel
-    std::cout << "Client disconnected: " << socket << std::endl;
+void IRCServer::closeSocket(int client_socket) {
+    close(client_socket);
+    poll_fds_.erase(std::remove_if(poll_fds_.begin(), poll_fds_.end(), FdComparator(client_socket)), poll_fds_.end());
+    clients_.erase(std::remove(clients_.begin(), clients_.end(), client_socket), clients_.end());
+	userInfo_.erase(client_socket);
+    std::cout << "Client disconnected: " << client_socket << std::endl;
 }
 
 void IRCServer::handleCmds(std::string message, int clientSocket) {
 
     // Split the message into lines
     std::istringstream iss(message);
+	std::istringstream pass_check(message);
     std::string line;
+
+	//-------------------Password check-----------------//
+
+	std::string last_line;
+	bool has_pass = false;
+	std::cout << BLUE "HELLO\n" RESET_COLOR;
+
+	for (int i = 0;std::getline(pass_check, last_line); i++) {
+		if (i == 0 && std::strncmp("CAP LS", last_line.c_str(), 6)) {
+			has_pass = true;
+			break;
+		}
+		std::cout << RED << last_line << RESET_COLOR << std::endl;
+		if (!std::strncmp("PASS", last_line.c_str(), 4)) {
+			has_pass = true;
+		}
+	}
+	if (!has_pass) {
+		std::string errorMessage = "Authentication failed!\n";
+		std::cout << BLUE "FAILED" << RESET_COLOR << std::endl;
+		send(clientSocket, errorMessage.c_str(), errorMessage.size(), 0);
+		close(clientSocket);
+	}
+
+	//------------------------------------------------//
 
 	while (std::getline(iss, line)) {
 		if (line.empty())
@@ -165,7 +199,7 @@ void IRCServer::handleCmds(std::string message, int clientSocket) {
 			CommandHandler handler = it->second;
 			(this->*handler)(clientSocket, lineStream);
 		} else {
-			std::string channel = channels_[clientSocket];
+			std::string channel = command;
 			broadcastMessage(clientSocket, line, channel);
 		}
 	}
@@ -175,6 +209,7 @@ void IRCServer::handleClient(int clientSocket) {
     char buffer[512];
     std::memset(buffer, 0, sizeof(buffer));
 
+	usleep(200);
     int bytesReceived = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
     if (bytesReceived == -1) {
         std::cerr << "Failed to receive data: " << strerror(errno) << std::endl;
@@ -192,6 +227,5 @@ void IRCServer::handleClient(int clientSocket) {
     std::cout << "Received message from client " << clientSocket << ": " << message << std::endl;
 
 	handleCmds(message, clientSocket);
-    
 }
 

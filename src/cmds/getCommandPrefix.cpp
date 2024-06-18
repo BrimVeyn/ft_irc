@@ -1,25 +1,24 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   PRIVMSG.cpp                                        :+:      :+:    :+:   */
+/*   getCommandPrefix.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/06/17 16:50:50 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/18 15:23:29 by bvan-pae         ###   ########.fr       */
+/*   Created: 2024/06/18 16:12:39 by bvan-pae          #+#    #+#             */
+/*   Updated: 2024/06/18 16:15:13 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/IRCServer.hpp"
-#include <sstream>
 
-void IRCServer::handlePrivmsgCommand(int clientSocket, std::istringstream & lineStream) {
+std::string IRCServer::getCommandPrefix(int clientSocket) {
+	std::string str;
 
-	std::string target;
-	lineStream >> target;
-	std::string privmsg;
-	std::getline(lineStream, privmsg);
+	str += ":" + userInfo_[clientSocket].nickname;
+	str += "!" + userInfo_[clientSocket].username;
+	str += "@" + userInfo_[clientSocket].server_addr;
+	str += " ";
 
-    std::string formattedMessage = ":" + userInfo_[clientSocket].nickname + " PRIVMSG " + target + " :" + privmsg + "\r\n";
-    broadcastMessage(clientSocket, formattedMessage, target);
+	return str;
 }
