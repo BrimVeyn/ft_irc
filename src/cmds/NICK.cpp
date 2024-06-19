@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   NICK.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
+/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/18 13:25:04 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/19 12:04:00 by nbardavi         ###   ########.fr       */
+/*   Updated: 2024/06/19 16:41:31 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,7 +57,7 @@ void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStr
 	std::string response = getCommandPrefix(clientSocket) + "NICK :" + nickname + "\r\n";
 	userInfo_[clientSocket].nickname = nickname;
 
-	std::cout << YELLOW << response << RESET_COLOR << std::endl;
+	printResponse(SERVER, response);
     
     // Send the NICK response to the client
     if (send(clientSocket, response.c_str(), response.size(), 0) == -1) {
