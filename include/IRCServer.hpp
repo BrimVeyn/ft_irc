@@ -46,6 +46,7 @@ public:
 private:
 
 	typedef struct {
+		bool is_register;
 		std::string nickname;
 		std::string username;
 		std::string server_addr;
@@ -72,6 +73,7 @@ private:
 	std::map<std::string, CommandHandler> commandMap_; //Pointeurs sur fonction des differentes commandes
 
 	std::string getCommandPrefix(int clientSocket);
+	int getClientSocket(const std::string &nickname);
 	std::string getServerReply(int numeric, int clientSocket);
 	std::string getMemberList(const std::string channel);
 
