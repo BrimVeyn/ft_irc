@@ -6,14 +6,13 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:50:32 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/19 11:16:40 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/19 14:05:24 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/IRCServer.hpp"
 #include <iterator>
 #include <sstream>
-
 
 std::string IRCServer::getServerReply(int numeric, int clientSocket) {
 	std::stringstream numeric_stream;
