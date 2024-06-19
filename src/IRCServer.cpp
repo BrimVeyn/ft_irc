@@ -30,6 +30,8 @@ IRCServer::IRCServer(int port, const std::string& password)
     commandMap_["MODE"] = &IRCServer::handleModeCommand;
     commandMap_["CAP"] = &IRCServer::handleCapCommand;
     commandMap_["PASS"] = &IRCServer::handlePassCommand;
+
+	availableModes_.push_back("+k");
 }
 
 IRCServer::~IRCServer() {
@@ -126,7 +128,7 @@ void IRCServer::acceptConnections() {
 }
 
 void IRCServer::broadcastMessage(int senderSocket, const std::string& message, const std::string& channel) {
-    std::cout << SERVER << GREEN << senderSocket << " in channel " << channel << " " << message << std::endl << RESET_COLOR;
+	printResponse(BROADCAST, message);
     for (size_t i = 0; i < clients_.size(); ++i) {
         int clientSocket = clients_[i];
 		// Get the iterator to the vector of channels for the given client
@@ -184,7 +186,7 @@ void IRCServer::handleCmds(std::string message, int clientSocket) {
 		if (!line.empty() && line[line.size() - 1] == '\r') {
 			line.erase(line.size() - 1);
 		}
-		std::cout << CLIENT << MAGENTA << line << RESET_COLOR << std::endl;
+		printResponse(CLIENT, line);
 
 		// Parse the command
 		std::istringstream lineStream(line);

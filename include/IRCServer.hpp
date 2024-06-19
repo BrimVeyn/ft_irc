@@ -34,8 +34,19 @@
 #define RPL_NOTOPIC 331
 #define RPL_NAMREPLY 353
 #define RPL_ENDOFNAMES 366
-#define CLIENT "[client] --> "
-#define SERVER "[server] --> "
+#define RPL_CHANNELMODEIS 324
+
+#define ERR_UNKNOWNMODE 472
+
+#define CLIENT_HEADER "[client] --> "
+#define SERVER_HEADER "[server] --> "
+#define BROADCAST_HEADER "[server][BC] --> "
+
+enum {
+	CLIENT,
+	BROADCAST,
+	SERVER,
+};
 
 class IRCServer {
 public:
@@ -57,6 +68,8 @@ private:
 	typedef struct {
 		std::string topic;
 		std::vector<std::string> members;
+		std::vector<std::string> operators;
+		std::map<std::string, std::string> modes;
 	} channelInfo;
 
 	typedef void (IRCServer::*CommandHandler)(int, std::istringstream&);
@@ -71,11 +84,26 @@ private:
 	std::map<int, userInfo>userInfo_; //Db des users
 	std::map<std::string, channelInfo>channelInfo_; //Db des channels
 	std::map<std::string, CommandHandler> commandMap_; //Pointeurs sur fonction des differentes commandes
+	std::vector<std::string> availableModes_; //Vecteur de tout les modes possible;
 
 	std::string getCommandPrefix(int clientSocket);
-	int getClientSocket(const std::string &nickname);
+	int			getClientSocket(const std::string &nickname);
+	int			getClientSocketFromUsername(const std::string &username);
 	std::string getServerReply(int numeric, int clientSocket);
 	std::string getMemberList(const std::string channel);
+
+	bool isUser(const std::string & str);
+	bool isOperator(std::string nickname, std::string channel);
+	bool isModeValid(std::string mode);
+
+	void updateUserMode(int clientSocket, std::string user, std::string mode);
+	void updateChannelMode(int clientSocket, std::string channel, std::string mode, std::string mode_option);
+	void setOperator(std::string nickname, std::string channel, int clientSocket);
+
+	void sendChannelMemberList(int clientSocket, std::string channel);
+	void sendChannelTopic(int clientSocket, std::string channel);
+
+	void printResponse(int mode, std::string message);
 
     void initializeSocket();
     void acceptConnections();

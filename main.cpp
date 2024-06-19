@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 09:47:31 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/17 16:25:58 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/19 14:28:35 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,5 +29,4 @@ int main(int ac, char *av[]) {
 	IRCServer server(port, password);
 
 	server.start();
-	
 }
