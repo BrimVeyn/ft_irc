@@ -115,7 +115,7 @@ void IRCServer::acceptConnections() {
                     poll_fds_.push_back(client_fd);
 
                     clients_.push_back(clientSocket);
-					// userInfo_[clientSocket].is_register = false;
+					userInfo_[clientSocket].is_register = false;
                     std::cout << "New client connected: " << inet_ntoa(clientAddr.sin_addr) << std::endl;
                 } else {
                     handleClient(poll_fds_[i].fd);
@@ -158,7 +158,6 @@ void IRCServer::handleCmds(std::string message, int clientSocket) {
     std::string line;
 
 	//-------------------Password check-----------------//
-
 	std::string last_line;
 	bool has_pass = false;
 
@@ -176,7 +175,6 @@ void IRCServer::handleCmds(std::string message, int clientSocket) {
 		send(clientSocket, errorMessage.c_str(), errorMessage.size(), 0);
 		close(clientSocket);
 	}
-
 	//------------------------------------------------//
 
 	while (std::getline(iss, line)) {
@@ -198,6 +196,7 @@ void IRCServer::handleCmds(std::string message, int clientSocket) {
 			CommandHandler handler = it->second;
 			(this->*handler)(clientSocket, lineStream);
 		} else {
+			// std::cout << RED << "commande:" << command << std::endl << RESET_COLOR;
 			std::string channel = command;
 			broadcastMessage(clientSocket, line, channel);
 		}
