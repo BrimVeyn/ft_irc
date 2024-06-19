@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:51:55 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/18 15:24:49 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/19 11:20:57 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,13 @@ void IRCServer::handleTopicCommand(int clientSocket, std::istringstream & lineSt
 	std::vector<std::string>::iterator it = std::find(channels.begin(), channels.end(), channel);
 
     if (it != channels.end()) {
-        topics_[channel] = topic;
-        std::string response = ":" + userInfo_[clientSocket].nickname + " TOPIC " + channel + " :" + topic + "\r\n";
+        channelInfo_[channel].topic = topic;
+        std::string response = getCommandPrefix(clientSocket) + "TOPIC " + channel + topic + "\r\n";
+		std::cout << SERVER << RED << response << RESET_COLOR << std::endl;
+		send(clientSocket, response.c_str(), response.size(), 0);
         broadcastMessage(clientSocket, response, channel);
-    }
+    } else {
+		(void) clientSocket;
+		//error wrong channel
+	}
 }

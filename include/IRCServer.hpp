@@ -30,6 +30,13 @@
 #define BOLD "\033[1m"
 #define UNDERLINE "\033[4m"
 
+#define RPL_TOPIC 332
+#define RPL_NOTOPIC 331
+#define RPL_NAMREPLY 353
+#define RPL_ENDOFNAMES 366
+#define CLIENT "[client] --> "
+#define SERVER "[server] --> "
+
 class IRCServer {
 public:
     IRCServer(int port, const std::string& password);
@@ -38,7 +45,7 @@ public:
 
 private:
 
-	typedef struct userInfo {
+	typedef struct {
 		std::string nickname;
 		std::string username;
 		std::string server_addr;
@@ -46,18 +53,28 @@ private:
 		
 	} userInfo;
 
+	typedef struct {
+		std::string topic;
+		std::vector<std::string> members;
+	} channelInfo;
+
 	typedef void (IRCServer::*CommandHandler)(int, std::istringstream&);
 
     int port_;
-    std::string password_;
-    int serverSocket_;
+	std::string password_;
+	int serverSocket_;
+
     std::vector<int> clients_;
     std::vector<struct pollfd> poll_fds_;
-	std::map<int, userInfo>userInfo_;
-    std::map<std::string, std::string> topics_;  // Map pour stocker les sujets des channels
-	std::map<std::string, CommandHandler> commandMap_;
+
+	std::map<int, userInfo>userInfo_; //Db des users
+	std::map<std::string, channelInfo>channelInfo_; //Db des channels
+	std::map<std::string, CommandHandler> commandMap_; //Pointeurs sur fonction des differentes commandes
 
 	std::string getCommandPrefix(int clientSocket);
+	std::string getServerReply(int numeric, int clientSocket);
+	std::string getMemberList(const std::string channel);
+
     void initializeSocket();
     void acceptConnections();
     void handleClient(int clientSocket);
