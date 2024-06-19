@@ -39,6 +39,9 @@ IRCServer::~IRCServer() {
     for (size_t i = 0; i < clients_.size(); ++i) {
         close(clients_[i]);
     }
+	for (std::map<std::string, channelInfo>::iterator it = channelInfo_.begin(); it != channelInfo_.end(); it++) {
+		channelInfo_.erase(it);
+	}
 }
 
 void IRCServer::initializeSocket() {
@@ -122,7 +125,7 @@ void IRCServer::acceptConnections() {
 }
 
 void IRCServer::broadcastMessage(int senderSocket, const std::string& message, const std::string& channel) {
-    std::cout << GREEN "Broadcasting message from client " << senderSocket << " in channel " << channel <<"\n" GREEN << message << std::endl << RESET_COLOR;
+    std::cout << SERVER << GREEN << senderSocket << " in channel " << channel << " " << message << std::endl << RESET_COLOR;
     for (size_t i = 0; i < clients_.size(); ++i) {
         int clientSocket = clients_[i];
 		// Get the iterator to the vector of channels for the given client
@@ -131,9 +134,7 @@ void IRCServer::broadcastMessage(int senderSocket, const std::string& message, c
 		// Use std::find to search for the channel
 		std::vector<std::string>::iterator it = std::find(channels.begin(), channels.end(), channel);
         if (clientSocket != senderSocket && it != channels.end()) {
-            std::cout << "Sending message to client " << clientSocket << " in channel " << channel << std::endl;
             if (send(clientSocket, message.c_str(), message.size(), 0) == -1) {
-                std::cerr << "Failed to send message to client " << clientSocket << ": " << strerror(errno) << std::endl;
                 closeSocket(clientSocket);
             }
         }
@@ -159,21 +160,18 @@ void IRCServer::handleCmds(std::string message, int clientSocket) {
 
 	std::string last_line;
 	bool has_pass = false;
-	std::cout << BLUE "HELLO\n" RESET_COLOR;
 
 	for (int i = 0;std::getline(pass_check, last_line); i++) {
 		if (i == 0 && std::strncmp("CAP LS", last_line.c_str(), 6)) {
 			has_pass = true;
 			break;
 		}
-		std::cout << RED << last_line << RESET_COLOR << std::endl;
 		if (!std::strncmp("PASS", last_line.c_str(), 4)) {
 			has_pass = true;
 		}
 	}
 	if (!has_pass) {
 		std::string errorMessage = "Authentication failed!\n";
-		std::cout << BLUE "FAILED" << RESET_COLOR << std::endl;
 		send(clientSocket, errorMessage.c_str(), errorMessage.size(), 0);
 		close(clientSocket);
 	}
@@ -187,7 +185,7 @@ void IRCServer::handleCmds(std::string message, int clientSocket) {
 		if (!line.empty() && line[line.size() - 1] == '\r') {
 			line.erase(line.size() - 1);
 		}
-		std::cout << "Processing line: " << line << std::endl;
+		std::cout << CLIENT << MAGENTA << line << RESET_COLOR << std::endl;
 
 		// Parse the command
 		std::istringstream lineStream(line);
@@ -224,7 +222,7 @@ void IRCServer::handleClient(int clientSocket) {
 
 
     std::string message(buffer, bytesReceived);
-    std::cout << "Received message from client " << clientSocket << ": " << message << std::endl;
+    // std::cout << "Received message from client " << clientSocket << ": " << message << std::endl;
 
 	handleCmds(message, clientSocket);
 }

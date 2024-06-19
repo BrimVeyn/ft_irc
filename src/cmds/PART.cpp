@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:52:32 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/18 16:17:11 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/19 11:23:06 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ void IRCServer::handlePartCommand(int clientSocket, std::istringstream & lineStr
     if (it != channels.end()) {
         std::string response = ":" + userInfo_[clientSocket].nickname + " PART " + channel + "\r\n";
 		std::string user_message = getCommandPrefix(clientSocket) + "PART " + channel + " .\r\n";
-		std::cout << MAGENTA << user_message << RESET_COLOR << std::endl;
+		std::cout << SERVER << MAGENTA << user_message << RESET_COLOR << std::endl;
 		send(clientSocket, user_message.c_str(), user_message.size(), 0);
         broadcastMessage(clientSocket, user_message, channel);
 		channels.erase(it);
