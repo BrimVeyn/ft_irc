@@ -105,13 +105,14 @@ void IRCServer::acceptConnections() {
                         std::cerr << "Failed to accept client: " << strerror(errno) << std::endl;
                         continue;
                     }
-
+					
                     struct pollfd client_fd;
                     client_fd.fd = clientSocket;
                     client_fd.events = POLLIN;
                     poll_fds_.push_back(client_fd);
 
                     clients_.push_back(clientSocket);
+					// userInfo_[clientSocket].is_register = false;
                     std::cout << "New client connected: " << inet_ntoa(clientAddr.sin_addr) << std::endl;
                 } else {
                     handleClient(poll_fds_[i].fd);

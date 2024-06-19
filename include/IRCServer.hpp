@@ -39,6 +39,7 @@ public:
 private:
 
 	typedef struct userInfo {
+		// bool is_register;
 		std::string nickname;
 		std::string username;
 		std::string server_addr;
