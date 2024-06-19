@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   NICK.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
+/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/18 13:25:04 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/18 16:18:45 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/19 10:47:23 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,26 +32,29 @@ void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStr
 	std::string nickname;
 	lineStream >> nickname;
 
-    // Store the nickname in the map
-	int suffix = 0;
-
-	for (std::vector<int>::iterator it = clients_.begin(); it != clients_.end(); it++) {
+	for (std::vector<int>::iterator it = clients_.begin(); it != clients_.end();) {
 		if (*it == clientSocket) {
+			std::cout << "hello";
+			it++;
 			continue;
 		}
-		std::cout << GREEN "Comparing : " << userInfo_[*it].nickname << addNumberToStr(nickname, suffix) << RESET_COLOR << std::endl;
-		if (userInfo_[*it].nickname == addNumberToStr(nickname, suffix)) {
-			suffix += 1;
-        }
+		std::cout << GREEN "Comparing : " << userInfo_[*it].nickname << nickname << RESET_COLOR << std::endl;
+		if (userInfo_[*it].nickname == nickname) {
+			nickname += "_";
+			it = clients_.begin();
+        } else 
+			it++;
 	}
 
-	if (suffix != 0)
-		nickname = addNumberToStr(nickname, suffix);
-
-
-    std::string response = getCommandPrefix(clientSocket) + "NICK :" + nickname + "\r\n";
+	// if (suffix != 0)
+	// 	nickname = addNumberToStr(nickname, suffix);
+   
 
 	userInfo_[clientSocket].nickname = nickname;
+	// if (userInfo_[clientSocket].is_register == false){
+	// 	return;
+	// }
+	std::string response = getCommandPrefix(clientSocket) + "NICK :" + nickname + "\r\n";
 
 	std::cout << YELLOW << response << RESET_COLOR << std::endl;
     
