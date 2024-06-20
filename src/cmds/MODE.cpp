@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:52:12 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 11:08:57 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/20 17:00:04 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,7 +70,7 @@ void IRCServer::keyModeManager(int clientSocket, std::string channel, std::strin
 		if (mode_option.size()) {
 			//Update key in db, and brodcast change key message
 			channelInfo_[channel].key = mode_option;
-			std::string modeResponse = ":" + userInfo_[clientSocket].server_addr + " ";
+			std::string modeResponse = SERVER_NAME;
 			modeResponse += "MODE " + channel + " " + mode + " " + mode_option + "\r\n";
 			printResponse(BROADCAST, modeResponse);
 			printResponse(SERVER, modeResponse);
@@ -95,7 +95,7 @@ void IRCServer::keyModeManager(int clientSocket, std::string channel, std::strin
 	} else if (channelInfo_[channel].key.size() && mode == "-k") {
 		//Remove key from db and broadcast mode change
 		channelInfo_[channel].key.erase();
-		std::string modeResponse = ":" + userInfo_[clientSocket].server_addr + " ";
+		std::string modeResponse = SERVER_NAME;
 		modeResponse += "MODE " + channel + " " + mode + "\r\n";
 		printResponse(BROADCAST, modeResponse);
 		printResponse(SERVER, modeResponse);
@@ -123,7 +123,7 @@ void IRCServer::operatorModeManager(int clientSocket, std::string channel, std::
 		channelInfo_[channel].members.push_back(mode_option);
 	}
 
-	std::string modeResponse = ":" + userInfo_[clientSocket].server_addr + " ";
+	std::string modeResponse = SERVER_NAME;
 	modeResponse += "MODE " + channel + " " + mode + " " + mode_option + "\r\n";
 	printResponse(BROADCAST, modeResponse);
 	printResponse(SERVER, modeResponse);
@@ -148,7 +148,7 @@ void IRCServer::userLimitModeManager(int clientSocket, std::string channel, std:
 		channelInfo_[channel].userLimit = 0;
 	}
 
-	std::string modeResponse = ":" + userInfo_[clientSocket].server_addr + " ";
+	std::string modeResponse = SERVER_NAME;
 	modeResponse += "MODE " + channel + " " + mode;
 	if (mode_option.size())
 		modeResponse += " " + mode_option;
@@ -167,7 +167,7 @@ void IRCServer::topicLockModeManager(int clientSocket, std::string channel, std:
 		channelInfo_[channel].isTopicProtected = false;
 	}
 
-	std::string modeResponse = ":" + userInfo_[clientSocket].server_addr + " ";
+	std::string modeResponse = SERVER_NAME;
 	modeResponse += "MODE " + channel + " " + mode + "\r\n";
 	printResponse(BROADCAST, modeResponse);
 	printResponse(SERVER, modeResponse);
@@ -175,10 +175,20 @@ void IRCServer::topicLockModeManager(int clientSocket, std::string channel, std:
 	broadcastMessage(clientSocket, modeResponse, channel);
 }
 
-// void IRCServer::inviteModeManager(int clientSocket, std::string channel, std::string mode, std::string mode_option) {
-//
-//
-// }
+void IRCServer::inviteModeManager(int clientSocket, std::string channel, std::string mode) {
+	if (mode == "+i") {
+		channelInfo_[channel].isInviteOnly = true;
+	} else if (mode == "-i") {
+		channelInfo_[channel].isInviteOnly = false;
+	}
+
+	std::string modeResponse = SERVER_NAME;
+	modeResponse += "MODE " + channel + " " + mode + "\r\n";
+	printResponse(BROADCAST, modeResponse);
+	printResponse(SERVER, modeResponse);
+	send(clientSocket, modeResponse.c_str(), modeResponse.size(), 0);
+	broadcastMessage(clientSocket, modeResponse, channel);
+}
 
 void IRCServer::modeSplitter(int clientSocket, std::string channel, std::string mode, std::string mode_option) {
 	switch (mode[1]) {
@@ -194,16 +204,36 @@ void IRCServer::modeSplitter(int clientSocket, std::string channel, std::string 
 		case 't':
 			topicLockModeManager(clientSocket, channel, mode);
 			break;
-		// case 'i':
-		// 	inviteModeManager(clientSocket, channel, mode, mode_option);
+		case 'i':
+			inviteModeManager(clientSocket, channel, mode);
 	};
+}
+
+std::string IRCServer::gatherModes(std::string channel) {
+	channelInfo chan = channelInfo_[channel];
+	std::string modesNParams;
+
+	if (!chan.userLimit && !chan.isInviteOnly && !chan.isTopicProtected && !chan.key.size()) {
+		return modesNParams;
+	} else {
+		std::stringstream uLimit;
+		uLimit << chan.userLimit;
+		modesNParams += " +";
+		if (chan.userLimit) modesNParams += "l";
+		if (chan.isInviteOnly) modesNParams += "i";
+		if (chan.isTopicProtected) modesNParams += "t";
+		if (chan.key.size()) modesNParams += "k " + chan.key;
+		if (chan.userLimit) modesNParams += " " + uLimit.str();
+	}
+	return modesNParams;
 }
 
 void IRCServer::updateChannelMode(int clientSocket, std::string channel, std::string mode, std::string mode_option) {
 	if (!mode.size() && !mode_option.size()) {
 		//Print current channel modes
 		std::string serverResponse = getServerReply(RPL_CHANNELMODEIS, clientSocket);
-		serverResponse += " " + channel + "\r\n";
+		serverResponse += " " + channel;
+		serverResponse += gatherModes(channel) + "\r\n";
 		printResponse(SERVER, serverResponse);
 		send(clientSocket, serverResponse.c_str(), serverResponse.size(), 0);
 		return ;

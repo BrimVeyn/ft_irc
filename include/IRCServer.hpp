@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/20 11:03:29 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 11:03:43 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/20 16:51:36 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,7 @@
 #define RPL_NAMREPLY 353
 #define RPL_ENDOFNAMES 366
 #define RPL_CHANNELMODEIS 324
+#define RPL_INVITING 341 
 
 #define ERR_UNKNOWNMODE 472
 #define ERR_CHANOPRIVSNEEDED 482
@@ -59,10 +60,14 @@
 #define ERR_NOSUCHNICK 401
 #define ERR_NOSUCHCHANNEL 403
 #define ERR_USERNOTINCHANNEL 441
+#define ERR_PASSWDMISMATCH 464
+
 
 #define CLIENT_HEADER "[client] --> "
 #define SERVER_HEADER "[server] --> "
 #define BROADCAST_HEADER "[server][BC] --> "
+#define SERVER_NAME ":ft_irc "
+#define DEFAULT_KICK_REASON "Kicked by an operator"
 
 enum {
 	CLIENT,
@@ -82,7 +87,8 @@ private:
 	std::string creationDate;
 
 	typedef struct {
-		bool is_register;
+		bool is_authenticated;
+		std::string password;
 		std::string nickname;
 		std::string username;
 		std::string server_addr;
@@ -94,6 +100,7 @@ private:
 		std::string topic;
 		std::vector<std::string> members;
 		std::vector<std::string> operators;
+		std::vector<std::string> inviteList;
 		std::string key;
 		int userCount;
 		int userLimit;
@@ -114,6 +121,12 @@ private:
 	std::map<std::string, channelInfo>channelInfo_; //Db des channels
 	std::map<std::string, CommandHandler> commandMap_; //Pointeurs sur fonction des differentes commandes
 	std::string availableModes_; //Vecteur de tout les modes possible;
+	//
+	void authenticateClient(int clientSocket);
+	void handleNickCollision(int clientSocket, std::string & nickname);
+	void handleUsernameCollision(int clientSocket, std::string & username);
+	void sendWelcomeMessages(int clientSocket);
+
 
 	std::string getCommandPrefix(int clientSocket);
 	int			getClientSocket(const std::string &nickname);
@@ -129,14 +142,15 @@ private:
 
 	void updateUserMode(int clientSocket, std::string user, std::string mode);
 	void updateChannelMode(int clientSocket, std::string channel, std::string mode, std::string mode_option);
-	void setOperator(std::string nickname, std::string channel, int clientSocket);
 
 	void modeSplitter(int clientSocket, std::string channel, std::string mode, std::string mode_option);
 	void keyModeManager(int clientSocket, std::string channel, std::string mode, std::string mode_option);
 	void operatorModeManager(int clientSocket, std::string channel, std::string mode, std::string mode_option);
 	void userLimitModeManager(int clientSocket, std::string channel, std::string mode, std::string mode_option);
 	void topicLockModeManager(int clientSocket, std::string channel, std::string mode);
-	void inviteModeManager(int clientSocket, std::string channel, std::string mode, std::string mode_option);
+	void inviteModeManager(int clientSocket, std::string channel, std::string mode);
+
+	std::string gatherModes(std::string channel);
 
 	void sendChannelMemberList(int clientSocket, std::string channel);
 	void sendChannelTopic(int clientSocket, std::string channel);

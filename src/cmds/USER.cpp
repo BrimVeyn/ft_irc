@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   USER.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
+/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:50:13 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 09:55:49 by nbardavi         ###   ########.fr       */
+/*   Updated: 2024/06/20 16:02:38 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,15 +27,42 @@ static std::string addNumberToStr(const std::string & nickname, int nb) {
 	return str;
 }
 
-// Gestion de la commande USER
-void IRCServer::handleUserCommand(int clientSocket, std::istringstream & lineStream) {
-    std::string username, hostname, servername, realname;
+void IRCServer::sendWelcomeMessages(int clientSocket) {
+    userInfo &user = userInfo_[clientSocket];
 
-	// ----- Recupere info de lineStream ----- //
-    lineStream >> username >> hostname >> servername;
-    std::getline(lineStream, realname);
-	userInfo_[clientSocket].server_addr = servername;
+    std::string welcome = SERVER_NAME  "001 " + user.nickname + " :Welcome to the IRC network, " + user.nickname + "!" + "\r\n";
+    std::string yourHost = SERVER_NAME "002 " + user.nickname + " :Your host is --ft_irc-- running version 1.0" + "\r\n";
+    std::string created = SERVER_NAME "003 " + user.nickname + " :This server was created on 20/06/2024" + "\r\n";
+    std::string myInfo = SERVER_NAME"004 " + user.nickname + SERVER_NAME + "1.0 @bvan-pae/@nbardabi/@rrettien" + "\r\n";
 
+	printResponse(SERVER, welcome);
+	printResponse(SERVER, yourHost);
+	printResponse(SERVER, created);
+	printResponse(SERVER, myInfo);
+    send(clientSocket, welcome.c_str(), welcome.size(), 0);
+    send(clientSocket, yourHost.c_str(), yourHost.size(), 0);
+    send(clientSocket, created.c_str(), created.size(), 0);
+    send(clientSocket, myInfo.c_str(), myInfo.size(), 0);
+}
+
+void IRCServer::authenticateClient(int clientSocket) {
+    userInfo &user = userInfo_[clientSocket];
+
+    if (!user.password.empty() && !user.nickname.empty() && !user.username.empty() && !user.is_authenticated) {
+        if (user.password == password_) {
+            user.is_authenticated = true;
+            std::cout << "Client " << clientSocket << " authenticated successfully." << std::endl;
+            sendWelcomeMessages(clientSocket);
+        } else {
+            std::string response = SERVER_NAME "464 " + user.nickname + " :Wrong password\r\n";
+            send(clientSocket, response.c_str(), response.size(), 0);
+            closeSocket(clientSocket);
+            std::cerr << "Client " << clientSocket << " provided incorrect password." << std::endl;
+        }
+    }
+}
+
+void IRCServer::handleUsernameCollision(int clientSocket, std::string & username) {
 	int suffix = 0;
 	for (std::vector<int>::iterator it = clients_.begin(); it != clients_.end(); it++) {
 		if (*it == clientSocket) {
@@ -48,28 +75,25 @@ void IRCServer::handleUserCommand(int clientSocket, std::istringstream & lineStr
 	}
 	if (suffix != 0)
 		username = addNumberToStr(username, suffix);
+}
+
+// Gestion de la commande USER
+void IRCServer::handleUserCommand(int clientSocket, std::istringstream & lineStream) {
+    std::string username, hostname, servername, realname;
+
+	// ----- Recupere info de lineStream ----- //
+    lineStream >> username >> hostname >> servername;
+    std::getline(lineStream, realname);
+	userInfo_[clientSocket].server_addr = servername;
+
+	handleUsernameCollision(clientSocket, username);
 
     userInfo_[clientSocket].username = username;
 	// -------------------------------------- //
 
 	// ----- Gestion premiere connection ----- //
-	if (userInfo_[clientSocket].is_register == false){
-		userInfo_[clientSocket].is_register = true;
-
-		std::string responseNICK = ":" + hostname + "!" + hostname + "@" + servername + " NICK :" + userInfo_[clientSocket].nickname + "\r\n";
-		if (send(clientSocket, responseNICK.c_str(), responseNICK.size(), 0) == -1) {
-			std::cerr << "Failed to send NICK response" << std::endl;
-		} else {
-			std::cerr << "Successfully sent NICK response" << std::endl;
-		}
+	if (userInfo_[clientSocket].is_authenticated == false){
+		authenticateClient(clientSocket);
 	}
 	// -------------------------------------- //
-
-	std::cout << MAGENTA << "username is " << username << RESET_COLOR << std::endl;
-    // Example response (you might want to customize this)
-    std::string response = ":localhost 001 " + userInfo_[clientSocket].nickname + " :Welcome to the IRC server\r\n";
-    std::cout << "Handling USER command for client " << clientSocket << " with username " << username << std::endl;
-
-    // Send response to the client
-    send(clientSocket, response.c_str(), response.size(), 0);
 }
