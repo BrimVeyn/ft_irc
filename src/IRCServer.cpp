@@ -5,6 +5,7 @@
 #include <sstream>
 #include <algorithm>
 #include <sys/socket.h>
+#include <ctime>
 
 IRCServer* IRCServer::instance_ = NULL;
 
@@ -25,6 +26,16 @@ void IRCServer::cleanup(){
 	}
 }
 
+std::string getCurrentDateTime() {
+    std::time_t now = std::time(0);
+    std::tm* now_tm = std::localtime(&now);
+
+    char buffer[20];
+    std::strftime(buffer, sizeof(buffer), "%d-%m-%Y %H:%M:%S", now_tm);
+
+    return std::string(buffer);
+}
+
 IRCServer::IRCServer(int port, const std::string& password)
     : port_(port), password_(password), serverSocket_(-1) {
 	
@@ -39,6 +50,9 @@ IRCServer::IRCServer(int port, const std::string& password)
     commandMap_["MODE"] = &IRCServer::handleModeCommand;
     commandMap_["CAP"] = &IRCServer::handleCapCommand;
     commandMap_["PASS"] = &IRCServer::handlePassCommand;
+	commandMap_["motd"] = &IRCServer::handleMotdCommand;
+
+	creationDate = getCurrentDateTime();
 
 	instance_ = this;
     std::atexit(IRCServer::cleanup);
