@@ -6,12 +6,24 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:52:32 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/19 16:55:59 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/20 10:09:12 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/IRCServer.hpp"
 #include <sstream>
+
+void IRCServer::removeMember(int clientSocket, std::string channel) {
+	std::vector<std::string> & memberVect = channelInfo_[channel].members;
+	std::vector<std::string> & operatorVect = channelInfo_[channel].operators;
+	std::vector<std::string>::iterator it;
+
+	if ((it = std::find(memberVect.begin(),memberVect.end(), userInfo_[clientSocket].nickname)) != memberVect.end()) {
+		memberVect.erase(it);
+	} else if ((it = std::find(operatorVect.begin(),operatorVect.end(), "@" + userInfo_[clientSocket].nickname)) != operatorVect.end()) {
+		operatorVect.erase(it);
+	}
+}
 
 void IRCServer::handlePartCommand(int clientSocket, std::istringstream & lineStream) {
 
@@ -30,5 +42,8 @@ void IRCServer::handlePartCommand(int clientSocket, std::istringstream & lineStr
 		send(clientSocket, user_message.c_str(), user_message.size(), 0);
         broadcastMessage(clientSocket, user_message, channel);
 		channels.erase(it);
+		removeMember(clientSocket, channel);
+		channelInfo_[channel].userCount -= 1;
     }
+	//remove user from db
 }
