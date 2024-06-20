@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/06/17 09:47:31 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/19 14:28:35 by bvan-pae         ###   ########.fr       */
+/*   Created: 2024/06/20 11:05:34 by bvan-pae          #+#    #+#             */
+/*   Updated: 2024/06/20 11:06:00 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <pthread.h>
+#include <csignal>
 
 int main(int ac, char *av[]) {
 
@@ -25,8 +26,8 @@ int main(int ac, char *av[]) {
 
 	const std::string password(av[2]);
 	int port = std::atoi(av[1]);
-	
-	IRCServer server(port, password);
+	IRCServer* ptr = new IRCServer(port, password);
 
-	server.start();
+	ptr->start();
+	delete ptr;	
 }

@@ -6,12 +6,26 @@
 /*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:50:13 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/19 12:56:41 by nbardavi         ###   ########.fr       */
+/*   Updated: 2024/06/20 09:55:49 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/IRCServer.hpp"
 #include <sstream>
+
+static std::string addNumberToStr(const std::string & nickname, int nb) {
+	std::stringstream ss;
+
+	if (nb != 0)
+		ss << nickname << nb;
+	else
+		ss << nickname;
+
+	std::string str;
+	ss >> str;
+
+	return str;
+}
 
 // Gestion de la commande USER
 void IRCServer::handleUserCommand(int clientSocket, std::istringstream & lineStream) {
@@ -21,6 +35,20 @@ void IRCServer::handleUserCommand(int clientSocket, std::istringstream & lineStr
     lineStream >> username >> hostname >> servername;
     std::getline(lineStream, realname);
 	userInfo_[clientSocket].server_addr = servername;
+
+	int suffix = 0;
+	for (std::vector<int>::iterator it = clients_.begin(); it != clients_.end(); it++) {
+		if (*it == clientSocket) {
+			continue;
+		}
+		std::cout << GREEN "Comparing : " << userInfo_[*it].username << " " << username << RESET_COLOR << std::endl;
+		if (userInfo_[*it].username == addNumberToStr(username, suffix)) {
+			suffix += 1;
+        }
+	}
+	if (suffix != 0)
+		username = addNumberToStr(username, suffix);
+
     userInfo_[clientSocket].username = username;
 	// -------------------------------------- //
 

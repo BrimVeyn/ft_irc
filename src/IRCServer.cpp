@@ -1,9 +1,13 @@
 #include "../include/IRCServer.hpp"
+#include <cstddef>
 #include <cstring>
 #include <ostream>
 #include <sstream>
 #include <algorithm>
 #include <sys/socket.h>
+#include <ctime>
+
+IRCServer* IRCServer::instance_ = NULL;
 
 // Classe de comparaison pour remove_if
 class FdComparator {
@@ -16,9 +20,24 @@ private:
     int socket_;
 };
 
+void IRCServer::cleanup(){
+	if (instance_){
+		delete instance_;
+	}
+}
+
+std::string getCurrentDateTime() {
+    std::time_t now = std::time(0);
+    std::tm* now_tm = std::localtime(&now);
+
+    char buffer[20];
+    std::strftime(buffer, sizeof(buffer), "%d-%m-%Y %H:%M:%S", now_tm);
+
+    return std::string(buffer);
+}
+
 IRCServer::IRCServer(int port, const std::string& password)
     : port_(port), password_(password), serverSocket_(-1) {
-
 	//Initialize commandMap, which points to every command we handle
     commandMap_["NICK"] = &IRCServer::handleNickCommand;
     commandMap_["USER"] = &IRCServer::handleUserCommand;
@@ -31,12 +50,17 @@ IRCServer::IRCServer(int port, const std::string& password)
     commandMap_["MODE"] = &IRCServer::handleModeCommand;
     commandMap_["CAP"] = &IRCServer::handleCapCommand;
     commandMap_["PASS"] = &IRCServer::handlePassCommand;
-
+	commandMap_["motd"] = &IRCServer::handleMotdCommand;
 	//Set available channel modes
 	availableModes_ = "+i-i+k-k+o-o+t-t+l-l";
+	creationDate = getCurrentDateTime();
+
+	instance_ = this;
+    std::atexit(IRCServer::cleanup);
 }
 
 IRCServer::~IRCServer() {
+	std::cout << std::endl << RED << "Server shutting down..." << RESET_COLOR << std::endl;
     if (serverSocket_ != -1) {
         close(serverSocket_);
     }
@@ -80,10 +104,31 @@ void IRCServer::initializeSocket() {
         exit(EXIT_FAILURE);
     }
 
-    std::cout << "Server is listening on port " << port_ << std::endl;
+    std::cout << GREEN << "Server is listening on port " << port_ << RESET_COLOR << std::endl;
+}
+
+void IRCServer::handleSignal(int signal_num){
+	exit (signal_num);
+}
+
+void IRCServer::initializeSignals(){
+
+    std::memset(&sa, 0, sizeof(sa));
+
+    // Set the signal handler function
+    sa.sa_handler = IRCServer::handleSignal;
+
+    // Set the flag to restart functions if interrupted by handler
+    sa.sa_flags = SA_RESTART;
+
+    // Set up the SIGINT handler
+    if (sigaction(SIGINT, &sa, NULL) != 0) {
+        std::cerr << "Error setting up signal handler: " << std::strerror(errno) << std::endl;
+    }
 }
 
 void IRCServer::start() {
+	initializeSignals();
     initializeSocket();
     acceptConnections();
 }
