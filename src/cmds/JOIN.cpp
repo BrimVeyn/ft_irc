@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:50:32 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 10:09:16 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/20 16:47:43 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,8 +20,7 @@ std::string IRCServer::getServerReply(int numeric, int clientSocket) {
 
 	std::string numeric_string = numeric_stream.str();
 
-	std::string response = ":" + userInfo_[clientSocket].server_addr;
-	response += " " + numeric_string +  " " + userInfo_[clientSocket].nickname;
+	std::string response = SERVER_NAME + numeric_string +  " " + userInfo_[clientSocket].nickname;
 
 	return response;
 }
@@ -53,16 +52,6 @@ std::string IRCServer::getMemberList(const std::string channel) {
 			members_stream << " ";
 	}
 	return members_stream.str();
-}
-
-void IRCServer::setOperator(std::string nickname, std::string channel, int clientSocket) {
-	// std::string serverResponse = getServerReply(RPL_CHANNELMODEIS, clientSocket);
-	// serverResponse += " " + channel + "\r\n";
-	// std::cout << SERVER << RED << serverResponse << RESET_COLOR << std::endl;
-	// send(clientSocket, serverResponse.c_str(), serverResponse.size(), 0);
-	(void) nickname;
-	(void) channel;
-	(void) clientSocket;
 }
 
 void IRCServer::sendChannelMemberList(int clientSocket, std::string channel) {
@@ -99,6 +88,16 @@ void IRCServer::handleJoinCommand(int clientSocket, std::istringstream & lineStr
 	std::string channel, key;
 	lineStream >> channel >> key;
 
+	std::vector<std::string> inviteList = channelInfo_[channel].inviteList;
+
+	if (channelInfo_[channel].isInviteOnly && std::find(inviteList.begin(), inviteList.end(), userInfo_[clientSocket].nickname) == inviteList.end()) {
+		std::string hasTopicResponse = getServerReply(ERR_INVITEONLYCHAN ,clientSocket);
+		hasTopicResponse += " " + channel + " :You're not invited to this channel\r\n";
+		printResponse(SERVER, hasTopicResponse);
+		send(clientSocket, hasTopicResponse.c_str(), hasTopicResponse.size(), 0);
+		return ;
+	}
+
 	if (channelInfo_[channel].key.size() && key != channelInfo_[channel].key) {
 		std::string hasTopicResponse = getServerReply(ERR_BADCHANNELKEY ,clientSocket);
 		hasTopicResponse += " " + channel + " :Bad channel key\r\n";
@@ -107,7 +106,8 @@ void IRCServer::handleJoinCommand(int clientSocket, std::istringstream & lineStr
 		return ;
 	}
 
-	if (channelInfo_[channel].userLimit != 0  && channelInfo_[channel].userCount + 1 <= channelInfo_[channel].userLimit) {
+	// std::cout << "USER LIMIT = " << channelInfo_[channel].userLimit << " USER COUNT = " << channelInfo_[channel].userCount << std::endl;
+	if (channelInfo_[channel].userLimit != 0  && channelInfo_[channel].userCount >= channelInfo_[channel].userLimit) {
 		std::string hasTopicResponse = getServerReply(ERR_CHANNELISFULL,clientSocket);
 		hasTopicResponse += " " + channel + " :Channel is full\r\n";
 		printResponse(SERVER, hasTopicResponse);

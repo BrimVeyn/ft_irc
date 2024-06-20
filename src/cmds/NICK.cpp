@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/20 11:03:17 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 11:03:18 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/20 15:08:26 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,12 +27,8 @@ std::string addNumberToStr(const std::string & nickname, int nb) {
 	return str;
 }
 
-// Gestion de la commande NICK
-void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStream) {
-	std::string nickname;
-	lineStream >> nickname;
+void IRCServer::handleNickCollision(int clientSocket, std::string & nickname) {
 
-	// ----- Ajout suffix si duplication de nickname ----- //
 	int suffix = 0;
 	for (std::vector<int>::iterator it = clients_.begin(); it != clients_.end(); it++) {
 		if (*it == clientSocket) {
@@ -45,10 +41,19 @@ void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStr
 	}
 	if (suffix != 0)
 		nickname = addNumberToStr(nickname, suffix);
+}
+
+// Gestion de la commande NICK
+void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStream) {
+	std::string nickname;
+	lineStream >> nickname;
+
+	// ----- Ajout suffix si duplication de nickname ----- //
+	handleNickCollision(clientSocket, nickname);
 	//-----------------------------------------//
 
 	// ----- Gestion premiere connection ----- //
-	if (userInfo_[clientSocket].is_register == false){
+	if (userInfo_[clientSocket].is_authenticated == false){
 		userInfo_[clientSocket].nickname = nickname;
 		return;
 	}
@@ -57,13 +62,8 @@ void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStr
 	std::string response = getCommandPrefix(clientSocket) + "NICK :" + nickname + "\r\n";
 	userInfo_[clientSocket].nickname = nickname;
 
+	//Send nick Response
 	printResponse(SERVER, response);
-    
-    // Send the NICK response to the client
-    if (send(clientSocket, response.c_str(), response.size(), 0) == -1) {
-        std::cerr << "Failed to send NICK response" << std::endl;
-    } else {
-        std::cerr << "Successfully sent NICK response" << std::endl;
-    }
+    send(clientSocket, response.c_str(), response.size(), 0);
 	//-----------------------------------------//
 }

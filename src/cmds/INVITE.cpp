@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:51:33 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/18 15:17:42 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/20 12:19:45 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,18 +14,27 @@
 #include <sstream>
 
 void IRCServer::handleInviteCommand(int clientSocket, std::istringstream & lineStream) {
-	(void) clientSocket;
-	(void) lineStream;
-	// std::string channel, user;
-	// lineStream >> channel >> user;
- //    if (channels_[clientSocket] == channel) {
- //        // Rechercher le client avec le pseudonyme donné et l'inviter
- //        for (std::map<int, std::string>::iterator it = nicknames_.begin(); it != nicknames_.end(); ++it) {
- //            if (it->second == user) {
- //                std::string response = ":" + nicknames_[clientSocket] + " INVITE " + user + " " + channel + "\r\n";
- //                send(it->first, response.c_str(), response.size(), 0);
- //                return;
- //            }
- //        }
- //    }
+	std::string user, channel;
+	lineStream >> user >> channel;
+
+	if ((isOperator("@" + userInfo_[clientSocket].nickname, channel) && channelInfo_[channel].isInviteOnly) || !channelInfo_[channel].isInviteOnly) {
+		std::string serverResponse = getCommandPrefix(clientSocket);
+		serverResponse += "INVITE " + user + " " + channel + "\r\n";
+		printResponse(SERVER, serverResponse);
+		if (send(getClientSocket(user), serverResponse.c_str(), serverResponse.size(), 0) == -1) {
+			//nosuchuser;
+			std::string serverResponse = getServerReply(ERR_NOSUCHNICK, clientSocket);
+			serverResponse += " " + user + " :No such user\r\n";
+			printResponse(SERVER, serverResponse);
+			send(clientSocket, serverResponse.c_str(), serverResponse.size(), 0);
+			return ;
+		} else {
+			channelInfo_[channel].inviteList.push_back(user);
+			std::string serverResponse = getServerReply(RPL_INVITING, clientSocket);
+			serverResponse += " " + user + " " + channel + "\r\n";
+			printResponse(SERVER, serverResponse);
+			send(clientSocket, serverResponse.c_str(), serverResponse.size(), 0);
+			return ;
+		}
+	}
 }
