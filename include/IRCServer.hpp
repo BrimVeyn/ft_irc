@@ -47,6 +47,8 @@ public:
 private:
 
 	static IRCServer* instance_;
+	std::string creationDate;
+
 	typedef struct {
 		bool is_register;
 		std::string nickname;
@@ -101,6 +103,7 @@ private:
     void handleModeCommand(int clientSocket, std::istringstream& lineStream);
     void handlePassCommand(int clientSocket, std::istringstream& lineStream);
     void handleCapCommand(int clientSocket, std::istringstream& lineStream);
+    void handleMotdCommand(int clientSocket, std::istringstream& lineStream);
 
 	static void handleSignal(int signal_num);
 };
