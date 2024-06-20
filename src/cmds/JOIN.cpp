@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:50:32 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/19 17:02:42 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/20 10:09:16 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,8 +67,6 @@ void IRCServer::setOperator(std::string nickname, std::string channel, int clien
 
 void IRCServer::sendChannelMemberList(int clientSocket, std::string channel) {
 
-	channelInfo_[channel].operators.push_back("@" + userInfo_[clientSocket].nickname);
-
 	std::string memberList = getMemberList(channel);
 	std::string nameReply = getServerReply(RPL_NAMREPLY, clientSocket) + " = ";
 	nameReply += channel + " :" + memberList + "\r\n";
@@ -98,13 +96,30 @@ void IRCServer::sendChannelTopic(int clientSocket, std::string channel) {
 }
 
 void IRCServer::handleJoinCommand(int clientSocket, std::istringstream & lineStream) {
-	std::string channel;
-	lineStream >> channel;
+	std::string channel, key;
+	lineStream >> channel >> key;
+
+	if (channelInfo_[channel].key.size() && key != channelInfo_[channel].key) {
+		std::string hasTopicResponse = getServerReply(ERR_BADCHANNELKEY ,clientSocket);
+		hasTopicResponse += " " + channel + " :Bad channel key\r\n";
+		printResponse(SERVER, hasTopicResponse);
+		send(clientSocket, hasTopicResponse.c_str(), hasTopicResponse.size(), 0);
+		return ;
+	}
+
+	if (channelInfo_[channel].userLimit != 0  && channelInfo_[channel].userCount + 1 <= channelInfo_[channel].userLimit) {
+		std::string hasTopicResponse = getServerReply(ERR_CHANNELISFULL,clientSocket);
+		hasTopicResponse += " " + channel + " :Channel is full\r\n";
+		printResponse(SERVER, hasTopicResponse);
+		send(clientSocket, hasTopicResponse.c_str(), hasTopicResponse.size(), 0);
+		return ;
+	}
 
     userInfo_[clientSocket].channels.push_back(channel);
+	channelInfo_[channel].userCount += 1;
 
 	if (!getMemberList(channel).size())
-		setOperator(userInfo_[clientSocket].nickname, channel, clientSocket);
+		channelInfo_[channel].operators.push_back("@" + userInfo_[clientSocket].nickname);
 	else  {
 		channelInfo_[channel].members.push_back(userInfo_[clientSocket].nickname);
 	}

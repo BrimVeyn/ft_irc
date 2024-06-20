@@ -19,6 +19,7 @@ private:
 IRCServer::IRCServer(int port, const std::string& password)
     : port_(port), password_(password), serverSocket_(-1) {
 
+	//Initialize commandMap, which points to every command we handle
     commandMap_["NICK"] = &IRCServer::handleNickCommand;
     commandMap_["USER"] = &IRCServer::handleUserCommand;
     commandMap_["JOIN"] = &IRCServer::handleJoinCommand;
@@ -31,7 +32,8 @@ IRCServer::IRCServer(int port, const std::string& password)
     commandMap_["CAP"] = &IRCServer::handleCapCommand;
     commandMap_["PASS"] = &IRCServer::handlePassCommand;
 
-	availableModes_.push_back("+k");
+	//Set available channel modes
+	availableModes_ = "+i-i+k-k+o-o+t-t+l-l";
 }
 
 IRCServer::~IRCServer() {
