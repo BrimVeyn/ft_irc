@@ -49,9 +49,7 @@ IRCServer::IRCServer(int port, const std::string& password)
     commandMap_["INVITE"] = &IRCServer::handleInviteCommand;
     commandMap_["TOPIC"] = &IRCServer::handleTopicCommand;
     commandMap_["MODE"] = &IRCServer::handleModeCommand;
-    commandMap_["CAP"] = &IRCServer::handleCapCommand;
     commandMap_["PASS"] = &IRCServer::handlePassCommand;
-	commandMap_["motd"] = &IRCServer::handleMotdCommand;
 	//Set available channel modes
 	availableModes_ = "+i-i+k-k+o-o+t-t+l-l";
 	creationDate = getCurrentDateTime();
@@ -226,9 +224,7 @@ void IRCServer::handleCmds(std::string message, int clientSocket) {
 			CommandHandler handler = it->second;
 			(this->*handler)(clientSocket, lineStream);
 		} else {
-			// std::cout << RED << "commande:" << command << std::endl << RESET_COLOR;
-			// std::string channel = command;
-			// broadcastMessage(clientSocket, line, channel);
+			//handle command not found
 		}
 	}
 }

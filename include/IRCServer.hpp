@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/20 11:03:29 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 16:51:36 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/20 17:15:14 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -178,8 +178,6 @@ private:
     void handleTopicCommand(int clientSocket, std::istringstream& lineStream);
     void handleModeCommand(int clientSocket, std::istringstream& lineStream);
     void handlePassCommand(int clientSocket, std::istringstream& lineStream);
-    void handleCapCommand(int clientSocket, std::istringstream& lineStream);
-    void handleMotdCommand(int clientSocket, std::istringstream& lineStream);
 
 	static void handleSignal(int signal_num);
 };

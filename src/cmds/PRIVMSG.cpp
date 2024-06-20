@@ -3,16 +3,19 @@
 /*                                                        :::      ::::::::   */
 /*   PRIVMSG.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
+/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:50:50 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/19 13:38:06 by nbardavi         ###   ########.fr       */
+/*   Updated: 2024/06/20 17:11:58 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/IRCServer.hpp"
 #include <iterator>
 #include <sstream>
+
+//if target is user --> send user
+//if target is channel --> broadcast channel
 
 int IRCServer::getClientSocket(const std::string &nickname){
 	std::map<int, userInfo>::iterator it = userInfo_.begin();
