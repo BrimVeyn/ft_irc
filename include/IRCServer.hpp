@@ -2,6 +2,7 @@
 #define IRCSERVER_HPP
 
 #include <string>
+#include <csignal>
 #include <vector>
 #include <map>
 #include <cstdlib>
@@ -45,6 +46,7 @@ public:
 
 private:
 
+	static IRCServer* instance_;
 	typedef struct {
 		bool is_register;
 		std::string nickname;
@@ -64,7 +66,7 @@ private:
     int port_;
 	std::string password_;
 	int serverSocket_;
-
+	
     std::vector<int> clients_;
     std::vector<struct pollfd> poll_fds_;
 
@@ -76,8 +78,12 @@ private:
 	int getClientSocket(const std::string &nickname);
 	std::string getServerReply(int numeric, int clientSocket);
 	std::string getMemberList(const std::string channel);
-
+	
+	struct sigaction sa;
+	static void cleanup();
+	
     void initializeSocket();
+	void initializeSignals();
     void acceptConnections();
     void handleClient(int clientSocket);
     void closeSocket(int socket);
@@ -95,6 +101,8 @@ private:
     void handleModeCommand(int clientSocket, std::istringstream& lineStream);
     void handlePassCommand(int clientSocket, std::istringstream& lineStream);
     void handleCapCommand(int clientSocket, std::istringstream& lineStream);
+
+	static void handleSignal(int signal_num);
 };
 
 #endif // IRCSERVER_HPP
