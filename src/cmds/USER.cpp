@@ -6,7 +6,7 @@
 /*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:50:13 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 09:55:49 by nbardavi         ###   ########.fr       */
+/*   Updated: 2024/06/20 11:48:01 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,6 @@ void IRCServer::handleUserCommand(int clientSocket, std::istringstream & lineStr
 		if (*it == clientSocket) {
 			continue;
 		}
-		std::cout << GREEN "Comparing : " << userInfo_[*it].username << " " << username << RESET_COLOR << std::endl;
 		if (userInfo_[*it].username == addNumberToStr(username, suffix)) {
 			suffix += 1;
         }

@@ -3,15 +3,15 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+         #
+#    By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/03/15 11:21:29 by bvan-pae          #+#    #+#              #
-#    Updated: 2024/06/17 16:49:46 by bvan-pae         ###   ########.fr        #
+#    Updated: 2024/06/20 11:36:25 by nbardavi         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
 CPP     := g++
-CFLAGS  := -Wall -Wextra -Werror -std=c++98
+CFLAGS  := -Wall -Wextra -Werror -std=c++98 -g3
 
 NAME    := ircserv
 
