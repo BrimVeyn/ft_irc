@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   NICK.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
+/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/20 11:03:17 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 11:03:18 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/20 11:48:31 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,6 @@ void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStr
 		if (*it == clientSocket) {
 			continue;
 		}
-		std::cout << GREEN "Comparing : " << userInfo_[*it].nickname << " " << nickname << RESET_COLOR << std::endl;
 		if (userInfo_[*it].nickname == addNumberToStr(nickname, suffix)) {
 			suffix += 1;
         }
@@ -62,8 +61,6 @@ void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStr
     // Send the NICK response to the client
     if (send(clientSocket, response.c_str(), response.size(), 0) == -1) {
         std::cerr << "Failed to send NICK response" << std::endl;
-    } else {
-        std::cerr << "Successfully sent NICK response" << std::endl;
     }
 	//-----------------------------------------//
 }

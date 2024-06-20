@@ -52,8 +52,10 @@ IRCServer::IRCServer(int port, const std::string& password)
     commandMap_["PASS"] = &IRCServer::handlePassCommand;
 	commandMap_["motd"] = &IRCServer::handleMotdCommand;
 	//Set available channel modes
+	
+	bancommands_ = "PING-PONG-WHOIS";
 	availableModes_ = "+i-i+k-k+o-o+t-t+l-l";
-	creationDate = getCurrentDateTime();
+	creationDate_ = getCurrentDateTime();
 
 	instance_ = this;
     std::atexit(IRCServer::cleanup);
@@ -67,9 +69,6 @@ IRCServer::~IRCServer() {
     for (size_t i = 0; i < clients_.size(); ++i) {
         close(clients_[i]);
     }
-	for (std::map<std::string, channelInfo>::iterator it = channelInfo_.begin(); it != channelInfo_.end(); it++) {
-		channelInfo_.erase(it);
-	}
 }
 
 void IRCServer::initializeSocket() {
@@ -241,13 +240,13 @@ void IRCServer::handleCmds(std::string message, int clientSocket) {
 		lineStream >> command;
 
 		std::map<std::string, CommandHandler>::iterator it = commandMap_.find(command);
-		if (it != commandMap_.end()) {
+		if (it != commandMap_.end() && bancommands_.find(command) == bancommands_.npos) {
 			CommandHandler handler = it->second;
 			(this->*handler)(clientSocket, lineStream);
 		} else {
-			// std::cout << RED << "commande:" << command << std::endl << RESET_COLOR;
-			std::string channel = command;
-			broadcastMessage(clientSocket, line, channel);
+			std::string notFoundMsg = ":ft_irc 421 " + userInfo_[clientSocket].nickname + " " + command + " :Unknown command" + "\r\n";
+			send(clientSocket, notFoundMsg.c_str(), notFoundMsg.size(), 0);
+			printResponse(SERVER, notFoundMsg);
 		}
 	}
 }

@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   IRCServer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
+/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/20 11:03:29 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 11:03:43 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/20 11:32:26 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -79,7 +79,8 @@ public:
 private:
 
 	static IRCServer* instance_;
-	std::string creationDate;
+	std::string creationDate_;
+	std::string bancommands_;
 
 	typedef struct {
 		bool is_register;
