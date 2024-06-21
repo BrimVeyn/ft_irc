@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:50:32 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 16:47:43 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 10:17:53 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,6 +90,7 @@ void IRCServer::handleJoinCommand(int clientSocket, std::istringstream & lineStr
 
 	std::vector<std::string> inviteList = channelInfo_[channel].inviteList;
 
+	//Error invite only
 	if (channelInfo_[channel].isInviteOnly && std::find(inviteList.begin(), inviteList.end(), userInfo_[clientSocket].nickname) == inviteList.end()) {
 		std::string hasTopicResponse = getServerReply(ERR_INVITEONLYCHAN ,clientSocket);
 		hasTopicResponse += " " + channel + " :You're not invited to this channel\r\n";
@@ -98,6 +99,7 @@ void IRCServer::handleJoinCommand(int clientSocket, std::istringstream & lineStr
 		return ;
 	}
 
+	//Error wrong key
 	if (channelInfo_[channel].key.size() && key != channelInfo_[channel].key) {
 		std::string hasTopicResponse = getServerReply(ERR_BADCHANNELKEY ,clientSocket);
 		hasTopicResponse += " " + channel + " :Bad channel key\r\n";
@@ -106,7 +108,7 @@ void IRCServer::handleJoinCommand(int clientSocket, std::istringstream & lineStr
 		return ;
 	}
 
-	// std::cout << "USER LIMIT = " << channelInfo_[channel].userLimit << " USER COUNT = " << channelInfo_[channel].userCount << std::endl;
+	//Error channel is full
 	if (channelInfo_[channel].userLimit != 0  && channelInfo_[channel].userCount >= channelInfo_[channel].userLimit) {
 		std::string hasTopicResponse = getServerReply(ERR_CHANNELISFULL,clientSocket);
 		hasTopicResponse += " " + channel + " :Channel is full\r\n";
