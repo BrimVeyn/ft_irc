@@ -6,7 +6,7 @@
 /*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 13:22:17 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 15:34:37 by nbardavi         ###   ########.fr       */
+/*   Updated: 2024/06/21 16:08:27 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,15 +29,6 @@ std::string addNumberToStr(const std::string & nickname, int nb) {
 	ss >> str;
 
 	return str;
-}
-
-static bool filterNick(const std::string & nickname){
-	for (int i = 0; nickname[i]; i++){
-		if (std::isalnum(nickname[i]) == false && nickname[i] != '-'){
-			return false;
-		}
-	}
-	return true;
 }
 
 void IRCServer::handleNickCollision(int clientSocket, std::string & nickname) {
@@ -105,8 +96,7 @@ void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStr
 	std::string nickname;
 	lineStream >> nickname;
 
-	//:server_name 432 * nickname :Erroneous nickname
-	if (filterNick(nickname) == false) {
+	if (isValidNickname(nickname) == false) {
 		std::string invalidNickname = getServerReply(ERR_ERRONEUSNICKNAME, clientSocket);
 		invalidNickname += " " + nickname + " :Erroneus nickname\r\n";
 		printResponse(SERVER, invalidNickname);

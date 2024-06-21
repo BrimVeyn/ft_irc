@@ -6,7 +6,7 @@
 /*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 10:04:19 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 15:41:25 by nbardavi         ###   ########.fr       */
+/*   Updated: 2024/06/21 16:06:30 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,7 +153,8 @@ private:
 
 	void removeMember(int clientSocket, std::string channel); //Remove a member from a channel (KICK / PART)//
 	//
-	bool filter(const std::string & nickname);
+	bool isValidNickname(const std::string& nickname);
+	bool isValidChannel(const std::string& channel);
 
 	//-------Mode command------//
 	void modeSplitter(int clientSocket, std::string channel, std::string mode, std::string mode_option);

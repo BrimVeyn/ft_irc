@@ -177,16 +177,16 @@ void IRCServer::broadcastMessage(int senderSocket, const std::string& message, c
         int clientSocket = clients_[i];
 		// Get the iterator to the vector of channels for the given client
 		std::vector<std::string>& channels = userInfo_[clientSocket].channels;
-		std::vector<std::string>& channelss = userInfo_[senderSocket].channels;
+		// std::vector<std::string>& channelss = userInfo_[senderSocket].channels;
 
 		// Use std::find to search for the channel
-		std::cout << clientSocket << " | " << senderSocket << std::endl;
-		for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); it++) {
-			std::cout << "CC " << *it << std::endl;
-		}
-		for (std::vector<std::string>::iterator it = channelss.begin(); it != channelss.end(); it++) {
-			std::cout << "CS " << *it << std::endl;
-		}
+		// std::cout << clientSocket << " | " << senderSocket << std::endl;
+		// for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); it++) {
+		// 	std::cout << "CC " << *it << std::endl;
+		// }
+		// for (std::vector<std::string>::iterator it = channelss.begin(); it != channelss.end(); it++) {
+		// 	std::cout << "CS " << *it << std::endl;
+		// }
 
 		std::vector<std::string>::iterator it = std::find(channels.begin(), channels.end(), channel);
         if (clientSocket != senderSocket && it != channels.end()) {
@@ -198,13 +198,40 @@ void IRCServer::broadcastMessage(int senderSocket, const std::string& message, c
     }
 }
 
-bool IRCServer::filter(const std::string & nickname){
-	for (int i = 0; nickname[i]; i++){
-		if (std::isalnum(nickname[i]) == false){
-			return false;
-		}
-	}
-	return true;
+bool IRCServer::isValidNickname(const std::string& nickname) {
+    if (nickname.length() < 1 || nickname.length() > 9) {
+        return false;
+    }
+
+    if (!std::isalpha(nickname[0])) {
+        return false;
+    }
+
+    std::string validChars = "-[]\\{}^_|";
+
+    for (std::size_t i = 1; i < nickname.length(); ++i) {
+        char c = nickname[i];
+        if (!std::isalnum(c) && validChars.find(c) == std::string::npos) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool IRCServer::isValidChannel(const std::string& channel) {
+    if (channel[0] != '#') {
+        return false;
+    }
+    std::string validChars = "-[]\\{}^_|";
+
+    for (std::size_t i = 1; i < channel.length(); ++i) {
+        char c = channel[i];
+        if (!std::isalnum(c) && validChars.find(c) == std::string::npos) {
+            return false;
+        }
+    }
+    return true;
 }
 
 void IRCServer::closeSocket(int client_socket) {

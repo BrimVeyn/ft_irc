@@ -6,7 +6,7 @@
 /*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:50:32 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 15:40:06 by nbardavi         ###   ########.fr       */
+/*   Updated: 2024/06/21 16:09:51 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,22 +93,13 @@ void IRCServer::sendJoinMessage(int clientSocket, std::string channel) {
     broadcastMessage(clientSocket, joinMessage, channel);
 }
 
-static bool joinFilter(const std::string & nickname){
-	for (int i = 1; nickname[i]; i++){
-		if (std::isalnum(nickname[i]) == false){
-			return false;
-		}
-	}
-	return true;
-}
-
 void IRCServer::handleJoinCommand(int clientSocket, std::istringstream & lineStream) {
 	std::string channel, key;
 	lineStream >> channel >> key;
 
 	std::vector<std::string> inviteList = channelInfo_[channel].inviteList;
 
-	if (channel[0] != '#' || joinFilter(channel) == false) {
+	if (isValidChannel(channel) == false) {
 		std::string noSuchChannel = getServerReply(ERR_NOSUCHCHANNEL, clientSocket);
 		noSuchChannel += " " + channel + " :No such channel on ft_irc\r\n";
 		printResponse(SERVER, noSuchChannel);
