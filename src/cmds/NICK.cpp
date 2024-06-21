@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   NICK.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
+/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 13:22:17 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 16:08:27 by nbardavi         ###   ########.fr       */
+/*   Updated: 2024/06/21 16:49:03 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,7 @@ void IRCServer::sendToOtherChannels(int clientSocket, std::string response) {
 		for (; mit != cMember.end(); mit++) {
 			if (std::find(ppl_seen.begin(), ppl_seen.end(), *mit) == ppl_seen.end() && *mit != userInfo_[clientSocket].nickname) {
 				printResponse(SERVER, response);
-				std::cout << "DEBUG MIT = " <<  *mit << getClientSocket(*mit) << std::endl;
+				// std::cout << "DEBUG MIT = " <<  *mit << getClientSocket(*mit) << std::endl;
 				send(getClientSocket(*mit), response.c_str(), response.size(), 0);
 				ppl_seen.push_back(*mit);
 			}
@@ -83,7 +83,7 @@ void IRCServer::sendToOtherChannels(int clientSocket, std::string response) {
 			std::string real_username = (*oit).substr(1);
 			if (std::find(ppl_seen.begin(), ppl_seen.end(), real_username) == ppl_seen.end() && real_username != userInfo_[clientSocket].nickname) {
 				printResponse(SERVER, response);
-				std::cout << "DEBUG OIT = " <<  real_username << getClientSocket(real_username) << std::endl;
+				// std::cout << "DEBUG OIT = " <<  real_username << getClientSocket(real_username) << std::endl;
 				send(getClientSocket(real_username), response.c_str(), response.size(), 0);
 				ppl_seen.push_back(real_username);
 			}

@@ -308,7 +308,6 @@ void IRCServer::handleClient(int clientSocket) {
 		}
 	} else if (bytesReceived == 0) {
 		// Client closed the connection
-		std::cerr << "Client disconnected: " << clientSocket << std::endl;
 		closeSocket(clientSocket);
 	} else {
 		// Handle recv errors
