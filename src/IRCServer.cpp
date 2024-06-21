@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <sys/socket.h>
 #include <ctime>
+#include <stdio.h>
 
 IRCServer* IRCServer::instance_ = NULL;
 
@@ -48,9 +49,7 @@ IRCServer::IRCServer(int port, const std::string& password)
     commandMap_["INVITE"] = &IRCServer::handleInviteCommand;
     commandMap_["TOPIC"] = &IRCServer::handleTopicCommand;
     commandMap_["MODE"] = &IRCServer::handleModeCommand;
-    commandMap_["CAP"] = &IRCServer::handleCapCommand;
     commandMap_["PASS"] = &IRCServer::handlePassCommand;
-	commandMap_["motd"] = &IRCServer::handleMotdCommand;
 	//Set available channel modes
 	
 	bancommands_ = "PING-PONG-WHOIS";
@@ -163,8 +162,8 @@ void IRCServer::acceptConnections() {
                     poll_fds_.push_back(client_fd);
 
                     clients_.push_back(clientSocket);
-					userInfo_[clientSocket].is_register = false;
-                    std::cout << "New client connected: " << inet_ntoa(clientAddr.sin_addr) << std::endl;
+					userInfo_[clientSocket].is_authenticated = false;
+                    std::cout << SERVER_HEADER << YELLOW << "New client connected: " << inet_ntoa(clientAddr.sin_addr) << RESET_COLOR << std::endl;
                 } else {
                     handleClient(poll_fds_[i].fd);
                 }
@@ -205,26 +204,6 @@ void IRCServer::handleCmds(std::string message, int clientSocket) {
 	std::istringstream pass_check(message);
     std::string line;
 
-	//-------------------Password check-----------------//
-	std::string last_line;
-	bool has_pass = false;
-
-	for (int i = 0;std::getline(pass_check, last_line); i++) {
-		if (i == 0 && std::strncmp("CAP LS", last_line.c_str(), 6)) {
-			has_pass = true;
-			break;
-		}
-		if (!std::strncmp("PASS", last_line.c_str(), 4)) {
-			has_pass = true;
-		}
-	}
-	if (!has_pass) {
-		std::string errorMessage = "Authentication failed!\n";
-		send(clientSocket, errorMessage.c_str(), errorMessage.size(), 0);
-		close(clientSocket);
-	}
-	//------------------------------------------------//
-
 	while (std::getline(iss, line)) {
 		if (line.empty())
 			continue;
@@ -244,6 +223,7 @@ void IRCServer::handleCmds(std::string message, int clientSocket) {
 			CommandHandler handler = it->second;
 			(this->*handler)(clientSocket, lineStream);
 		} else {
+			//handle command not found
 			std::string notFoundMsg = ":ft_irc 421 " + userInfo_[clientSocket].nickname + " " + command + " :Unknown command" + "\r\n";
 			send(clientSocket, notFoundMsg.c_str(), notFoundMsg.size(), 0);
 			printResponse(SERVER, notFoundMsg);
@@ -251,27 +231,45 @@ void IRCServer::handleCmds(std::string message, int clientSocket) {
 	}
 }
 
-void IRCServer::handleClient(int clientSocket) {
-    char buffer[512];
-    std::memset(buffer, 0, sizeof(buffer));
-
-	usleep(200);
-    int bytesReceived = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
-    if (bytesReceived == -1) {
-        std::cerr << "Failed to receive data: " << strerror(errno) << std::endl;
-        closeSocket(clientSocket);
-        return;
-    } else if (bytesReceived == 0) {
-        // Client disconnected
-        std::cerr << "Client disconnected: " << clientSocket << std::endl;
-        closeSocket(clientSocket);
-        return;
+void setNonBlocking(int socket) {
+    if (fcntl(socket, F_SETFL, O_NONBLOCK) == -1) {
+        perror("fcntl F_SETFL");
+        exit(EXIT_FAILURE);
     }
-
-
-    std::string message(buffer, bytesReceived);
-    // std::cout << "Received message from client " << clientSocket << ": " << message << std::endl;
-
-	handleCmds(message, clientSocket);
 }
 
+void IRCServer::handleClient(int clientSocket) {
+    setNonBlocking(clientSocket);
+
+    char buffer[1024];
+    static std::string inputBuffer;
+    ssize_t bytesReceived;
+
+	bytesReceived = recv(clientSocket, buffer, sizeof(buffer) - 1, 0);
+
+	if (bytesReceived > 0) {
+		buffer[bytesReceived] = '\0';
+		inputBuffer.append(buffer, bytesReceived);
+
+		// Process each complete command in the inputBuffer
+		size_t pos;
+		// std::cout << "BUFFER = " << inputBuffer << std::endl;
+		while ((pos = inputBuffer.find('\n')) != std::string::npos) {
+			std::string command = inputBuffer.substr(0, pos);
+			inputBuffer.erase(0, pos + 1);
+
+			// Handle the command
+			handleCmds(command, clientSocket);
+		}
+	} else if (bytesReceived == 0) {
+		// Client closed the connection
+		std::cerr << "Client disconnected: " << clientSocket << std::endl;
+		closeSocket(clientSocket);
+	} else {
+		// Handle recv errors
+		if (errno != EWOULDBLOCK && errno != EAGAIN) {
+			std::cerr << "Failed to receive data: " << strerror(errno) << std::endl;
+			closeSocket(clientSocket);
+		}
+	}
+}

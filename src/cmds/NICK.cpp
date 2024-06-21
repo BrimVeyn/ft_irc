@@ -3,15 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   NICK.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
+/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/06/20 11:03:17 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 11:08:33 by bvan-pae         ###   ########.fr       */
+/*   Created: 2024/06/21 12:05:47 by nbardavi          #+#    #+#             */
+/*   Updated: 2024/06/21 12:16:36 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/IRCServer.hpp"
+#include <algorithm>
+#include <cctype>
 #include <sstream>
+#include <map>
 
 std::string addNumberToStr(const std::string & nickname, int nb) {
 	std::stringstream ss;
@@ -27,12 +30,17 @@ std::string addNumberToStr(const std::string & nickname, int nb) {
 	return str;
 }
 
-// Gestion de la commande NICK
-void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStream) {
-	std::string nickname;
-	lineStream >> nickname;
+bool filterNick(const std::string & nickname){
+	for (int i = 0; nickname[i]; i++){
+		if (isalnum(nickname[i]) == false){
+			return false;
+		}
+	}
+	return true;
+}
 
-	// ----- Ajout suffix si duplication de nickname ----- //
+void IRCServer::handleNickCollision(int clientSocket, std::string & nickname) {
+
 	int suffix = 0;
 	for (std::vector<int>::iterator it = clients_.begin(); it != clients_.end(); it++) {
 		if (*it == clientSocket) {
@@ -44,45 +52,54 @@ void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStr
 	}
 	if (suffix != 0)
 		nickname = addNumberToStr(nickname, suffix);
+}
+
+struct ReplaceNick {
+	const std::string& oldNick;
+	const std::string& newNick;
+
+	ReplaceNick(const std::string& oldNick, const std::string& newNick) : oldNick(oldNick), newNick(newNick) {}
+
+	void operator()(std::pair<const std::string, channelInfo>& channel) const {
+		std::vector<std::string>& members = channel.second.members;
+		std::vector<std::string>& operators = channel.second.operators;
+		std::replace(members.begin(), members.end(), oldNick, newNick);
+		std::replace(operators.begin(), operators.end(), "@" + oldNick, "@" + newNick);
+	}
+};
+
+// Gestion de la commande NICK
+void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStream) {
+	std::string nickname;
+	lineStream >> nickname;
+
+	//:server_name 432 * nickname :Erroneous nickname
+	if (filterNick(nickname) == false) {
+		std::string message = ":ft_irc 432 * " + nickname + ":Erroneous nickname\r\n";
+		printResponse(SERVER, message);
+		send(clientSocket, message.c_str(), message.size(), 0);
+		return;
+	}
+	// ----- Ajout suffix si duplication de nickname ----- //
+	handleNickCollision(clientSocket, nickname);
 	//-----------------------------------------//
 
 	// ----- Gestion premiere connection ----- //
-	if (userInfo_[clientSocket].is_register == false){
+	if (userInfo_[clientSocket].is_authenticated == false){
 		userInfo_[clientSocket].nickname = nickname;
 		return;
 	}
 	//-----------------------------------------//
 
     // ----- Change nickname dans les channels ----- //
-    std::map<std::string, channelInfo>::iterator it = channelInfo_.begin();
-    for (;it != channelInfo_.end(); it++){
-        std::vector<std::string>::iterator m_it = it->second.members.begin();
-        std::vector<std::string>::iterator o_it = it->second.operators.begin();
-        for (; m_it != it->second.members.end(); m_it++){
-            // std::cout << YELLOW << "[DEBUG] comparing members: " << *m_it << " " << userInfo_[clientSocket].nickname << RESET_COLOR << std::endl;
-            if (*m_it == userInfo_[clientSocket].nickname){
-                *m_it = nickname;
-                break;
-            }
-        }
-        for (; o_it != it->second.operators.end(); o_it++){
-            // std::cout << YELLOW << "[DEBUG] comparing operators: " << *o_it << " " << '@' + userInfo_[clientSocket].nickname << RESET_COLOR << std::endl;
-            if (*o_it == '@' + userInfo_[clientSocket].nickname){
-                *o_it = nickname;
-                break;
-            }
-        }
-    }
+	std::string oldNick = userInfo_[clientSocket].nickname;
+    std::for_each(channelInfo_.begin(), channelInfo_.end(), ReplaceNick(oldNick, nickname));
     //-----------------------------------------//
 	
 	std::string response = getCommandPrefix(clientSocket) + "NICK :" + nickname + "\r\n";
 	userInfo_[clientSocket].nickname = nickname;
-
+	//Send nick Response
 	printResponse(SERVER, response);
-    
-    // Send the NICK response to the client
-    if (send(clientSocket, response.c_str(), response.size(), 0) == -1) {
-        std::cerr << "Failed to send NICK response" << std::endl;
-    }
+    send(clientSocket, response.c_str(), response.size(), 0);
 	//-----------------------------------------//
 }

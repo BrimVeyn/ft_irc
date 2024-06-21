@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:52:32 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 10:09:12 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 10:31:53 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,9 @@ void IRCServer::removeMember(int clientSocket, std::string channel) {
 	} else if ((it = std::find(operatorVect.begin(),operatorVect.end(), "@" + userInfo_[clientSocket].nickname)) != operatorVect.end()) {
 		operatorVect.erase(it);
 	}
+	std::vector<std::string> & userChannels = userInfo_[clientSocket].channels;
+	userChannels.erase(std::find(userChannels.begin(), userChannels.end(), channel));
+	channelInfo_[channel].userCount -= 1;
 }
 
 void IRCServer::handlePartCommand(int clientSocket, std::istringstream & lineStream) {
@@ -43,7 +46,10 @@ void IRCServer::handlePartCommand(int clientSocket, std::istringstream & lineStr
         broadcastMessage(clientSocket, user_message, channel);
 		channels.erase(it);
 		removeMember(clientSocket, channel);
-		channelInfo_[channel].userCount -= 1;
-    }
-	//remove user from db
+    } else {
+		std::string hasTopicResponse = getServerReply(ERR_USERNOTINCHANNEL,clientSocket);
+		hasTopicResponse += " " + userInfo_[clientSocket].nickname + " " + channel + " :You're not in this channel\r\n";
+		printResponse(SERVER, hasTopicResponse);
+		send(clientSocket, hasTopicResponse.c_str(), hasTopicResponse.size(), 0);
+	}
 }
