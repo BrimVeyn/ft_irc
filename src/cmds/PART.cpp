@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   PART.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
+/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:52:32 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 14:44:22 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 15:46:36 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,10 +28,27 @@ void IRCServer::removeMember(int clientSocket, std::string channel) {
 	channelInfo_[channel].userCount -= 1;
 }
 
+static bool channelFilter(const std::string & nickname){
+	for (int i = 1; nickname[i]; i++){
+		if (std::isalnum(nickname[i]) == false){
+			return false;
+		}
+	}
+	return true;
+}
+
 void IRCServer::handlePartCommand(int clientSocket, std::istringstream & lineStream) {
 
 	std::string channel;
 	lineStream >> channel;
+
+	if (channel[0] != '#' || channelFilter(channel) == false) {
+		std::string noSuchChannel = getServerReply(ERR_NOSUCHCHANNEL, clientSocket);
+		noSuchChannel += " " + channel + " :No such channel on ft_irc\r\n";
+		printResponse(SERVER, noSuchChannel);
+		send(clientSocket, noSuchChannel.c_str(), noSuchChannel.size(), 0);
+		return ;
+	}
 
 	// Get the iterator to the vector of channels for the given client
 	std::vector<std::string>& channels = userInfo_[clientSocket].channels;

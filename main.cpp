@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
+/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/20 11:05:34 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 17:09:59 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 15:21:39 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,9 +22,14 @@ int main(int ac, char *av[]) {
 		std::cout << "Usage : " << av[0] << " <port number> <password>" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-
+	
 	const std::string password(av[2]);
 	int port = std::atoi(av[1]);
+	if ( port < 1024 || port > 49151){
+		std::cerr << RED << "Error: Port need to be: 1024 < port < 49151" << RESET_COLOR << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
 	IRCServer* ptr = new IRCServer(port, password);
 
 	ptr->start();

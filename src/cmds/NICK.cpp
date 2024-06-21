@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   NICK.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
+/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 13:22:17 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 14:04:06 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 15:34:37 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,7 +31,7 @@ std::string addNumberToStr(const std::string & nickname, int nb) {
 	return str;
 }
 
-bool filterNick(const std::string & nickname){
+static bool filterNick(const std::string & nickname){
 	for (int i = 0; nickname[i]; i++){
 		if (std::isalnum(nickname[i]) == false && nickname[i] != '-'){
 			return false;
@@ -107,10 +107,11 @@ void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStr
 
 	//:server_name 432 * nickname :Erroneous nickname
 	if (filterNick(nickname) == false) {
-		std::string message = ":ft_irc 432 * " + nickname + ":Erroneous nickname\r\n";
-		printResponse(SERVER, message);
-		send(clientSocket, message.c_str(), message.size(), 0);
-		return;
+		std::string invalidNickname = getServerReply(ERR_ERRONEUSNICKNAME, clientSocket);
+		invalidNickname += " " + nickname + " :Erroneus nickname\r\n";
+		printResponse(SERVER, invalidNickname);
+		send(clientSocket, invalidNickname.c_str(), invalidNickname.size(), 0);
+		return ;
 	}
 	// ----- Ajout suffix si duplication de nickname ----- //
 	handleNickCollision(clientSocket, nickname);

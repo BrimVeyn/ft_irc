@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   USER.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
+/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 10:05:00 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 10:05:07 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 15:42:16 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -86,6 +86,14 @@ void IRCServer::handleUserCommand(int clientSocket, std::istringstream & lineStr
 	userInfo_[clientSocket].server_addr = servername;
 
 	handleUsernameCollision(clientSocket, username);
+	
+	if (filter(username) == false){
+		std::string invalidNickname = getServerReply(ERR_ERRONEUSNICKNAME, clientSocket);
+		invalidNickname += " " + username + " :Erroneus username\r\n";
+		printResponse(SERVER, invalidNickname);
+		send(clientSocket, invalidNickname.c_str(), invalidNickname.size(), 0);
+		return ;
+	}
 
     userInfo_[clientSocket].username = username;
 	// -------------------------------------- //

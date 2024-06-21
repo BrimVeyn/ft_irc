@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   INVITE.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
+/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:51:33 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 10:33:10 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 15:42:59 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,14 @@
 void IRCServer::handleInviteCommand(int clientSocket, std::istringstream & lineStream) {
 	std::string user, channel;
 	lineStream >> user >> channel;
+	
+	if (filter(user) == false){
+		std::string serverResponse = getServerReply(ERR_NOSUCHNICK, clientSocket);
+		serverResponse += " " + user + " :Invalid username\r\n";
+		printResponse(SERVER, serverResponse);
+		send(clientSocket, serverResponse.c_str(), serverResponse.size(), 0);
+		return ;
+	}
 
 	if ((isOperator("@" + userInfo_[clientSocket].nickname, channel) && channelInfo_[channel].isInviteOnly) || !channelInfo_[channel].isInviteOnly) {
 
