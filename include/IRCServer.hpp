@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 10:04:19 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 11:02:30 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 11:56:46 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,6 +74,29 @@
 #define SERVER_NAME ":ft_irc "
 #define DEFAULT_KICK_REASON "Kicked by an operator"
 
+typedef struct channelInfo {
+	std::string topic;
+	std::vector<std::string> members;
+	std::vector<std::string> operators;
+	std::vector<std::string> inviteList;
+	std::string key;
+	int userCount;
+	int userLimit;
+	int isTopicProtected;
+	int isInviteOnly;
+
+} channelInfo;
+
+typedef struct userInfo {
+	bool is_authenticated;
+	std::string password;
+	std::string nickname;
+	std::string username;
+	std::string server_addr;
+	std::vector<std::string> channels;
+
+} userInfo;
+
 enum {
 	CLIENT,
 	BROADCAST,
@@ -88,34 +111,11 @@ public:
 
 private:
 
+	typedef void (IRCServer::*CommandHandler)(int, std::istringstream&);
+
 	static IRCServer* instance_;
 	std::string creationDate_;
 	std::string bancommands_;
-
-	typedef struct userInfo {
-		bool is_authenticated;
-		std::string password;
-		std::string nickname;
-		std::string username;
-		std::string server_addr;
-		std::vector<std::string> channels;
-		
-	} userInfo;
-
-	typedef struct channelInfo {
-		std::string topic;
-		std::vector<std::string> members;
-		std::vector<std::string> operators;
-		std::vector<std::string> inviteList;
-		std::string key;
-		int userCount;
-		int userLimit;
-		int isTopicProtected;
-		int isInviteOnly;
-
-	} channelInfo;
-
-	typedef void (IRCServer::*CommandHandler)(int, std::istringstream&);
 
     int port_;
 	std::string password_;
@@ -129,6 +129,7 @@ private:
 	std::map<std::string, CommandHandler> commandMap_; //Pointeurs sur fonction des differentes commandes
 	std::string availableModes_; //Vecteur de tout les modes possible;
 	
+	void updateNickInChannels(const std::string& oldNick, const std::string& newNick);
 	//-------Authentication-----//
 	void authenticateClient(int clientSocket);
 	void handleNickCollision(int clientSocket, std::string & nickname);
