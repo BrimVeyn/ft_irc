@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/06/17 16:50:13 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 17:16:36 by bvan-pae         ###   ########.fr       */
+/*   Created: 2024/06/21 10:05:00 by bvan-pae          #+#    #+#             */
+/*   Updated: 2024/06/21 10:05:07 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ void IRCServer::sendWelcomeMessages(int clientSocket) {
 
     std::string welcome = SERVER_NAME  "001 " + user.nickname + " :Welcome to the IRC network, " + user.nickname + "!" + "\r\n";
     std::string yourHost = SERVER_NAME "002 " + user.nickname + " :Your host is --ft_irc-- running version 1.0" + "\r\n";
-    std::string created = SERVER_NAME "003 " + user.nickname + " :This server was created on " + creationDate + "\r\n";
+    std::string created = SERVER_NAME "003 " + user.nickname + " :This server was created on " + creationDate_ + "\r\n";
     std::string myInfo = SERVER_NAME"004 " + user.nickname + SERVER_NAME + "1.0 @bvan-pae/@nbardabi/@rrettien" + "\r\n";
 
 	printResponse(SERVER, welcome);
@@ -68,7 +68,6 @@ void IRCServer::handleUsernameCollision(int clientSocket, std::string & username
 		if (*it == clientSocket) {
 			continue;
 		}
-		std::cout << GREEN "Comparing : " << userInfo_[*it].username << " " << username << RESET_COLOR << std::endl;
 		if (userInfo_[*it].username == addNumberToStr(username, suffix)) {
 			suffix += 1;
         }

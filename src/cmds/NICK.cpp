@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/06/20 11:03:17 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 15:08:26 by bvan-pae         ###   ########.fr       */
+/*   Created: 2024/06/21 10:04:40 by bvan-pae          #+#    #+#             */
+/*   Updated: 2024/06/21 10:04:49 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,6 @@ void IRCServer::handleNickCollision(int clientSocket, std::string & nickname) {
 		if (*it == clientSocket) {
 			continue;
 		}
-		std::cout << GREEN "Comparing : " << userInfo_[*it].nickname << " " << nickname << RESET_COLOR << std::endl;
 		if (userInfo_[*it].nickname == addNumberToStr(nickname, suffix)) {
 			suffix += 1;
         }

@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/06/20 11:03:29 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 17:15:14 by bvan-pae         ###   ########.fr       */
+/*   Created: 2024/06/21 10:04:19 by bvan-pae          #+#    #+#             */
+/*   Updated: 2024/06/21 10:04:20 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,7 +84,8 @@ public:
 private:
 
 	static IRCServer* instance_;
-	std::string creationDate;
+	std::string creationDate_;
+	std::string bancommands_;
 
 	typedef struct {
 		bool is_authenticated;
