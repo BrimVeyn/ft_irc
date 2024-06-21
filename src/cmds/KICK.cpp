@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:51:20 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/18 15:19:26 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 11:59:32 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,19 +15,36 @@
 
 void IRCServer::handleKickCommand(int clientSocket, std::istringstream & lineStream) {
 
-	std::string channel, user;
+	std::string channel, user, reason;
 	lineStream >> channel >> user;
-	(void) clientSocket;
 
-    // if (channels_[clientSocket] == channel) {
-    //     // Rechercher le client avec le pseudonyme donné et le retirer du canal
-    //     for (std::map<int, std::string>::iterator it = channels_.begin(); it != channels_.end(); ++it) {
-    //         if (it->second == channel && nicknames_[it->first] == user) {
-    //             std::string response = ":" + nicknames_[clientSocket] + " KICK " + channel + " " + user + " :Kicked by operator\r\n";
-    //             send(it->first, response.c_str(), response.size(), 0);
-    //             channels_.erase(it);
-    //             return;
-    //         }
-    //     }
-    // }
+	reason = lineStream.str();
+	reason = reason.substr(reason.find(":"));
+	
+	if (isOperator("@" + userInfo_[clientSocket].nickname, channel)) {
+		std::string serverResponse = getCommandPrefix(clientSocket);
+		serverResponse += "KICK " + channel + " " + user + " ";
+		if (reason.size() == 1)
+			serverResponse += DEFAULT_KICK_REASON;
+		else
+			serverResponse += reason;
+		serverResponse += "\r\n";
+		printResponse(SERVER, serverResponse);
+		if (send(getClientSocket(user), serverResponse.c_str(), serverResponse.size(), 0) == -1) {
+			//nosuchuser;
+			std::string serverResponse = getServerReply(ERR_NOSUCHNICK, clientSocket);
+			serverResponse += " " + user + " :No such user\r\n";
+			printResponse(SERVER, serverResponse);
+			send(clientSocket, serverResponse.c_str(), serverResponse.size(), 0);
+			return ;
+		} else {
+			broadcastMessage(getClientSocket(user), serverResponse, channel);
+			removeMember(getClientSocket(user), channel);
+		}
+	} else {
+		std::string serverResponse = getServerReply(ERR_CHANOPRIVSNEEDED, clientSocket);
+		serverResponse += " " + channel + " :Not enough privilege\r\n";
+		printResponse(SERVER, serverResponse);
+		send(clientSocket, serverResponse.c_str(), serverResponse.size(), 0);
+	}
 }
