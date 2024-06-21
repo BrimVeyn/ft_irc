@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 10:04:19 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 11:56:46 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 12:12:17 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,6 +171,7 @@ private:
 
 	void printResponse(int mode, std::string message);
 	void broadcastMessage(int senderSocket, const std::string& message, const std::string& channel);
+	void broadCastToChannel(std::string channel, int clientSocket, std::string clientResponse);
 
 	struct sigaction sa;
 	static void cleanup();
