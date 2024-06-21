@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:50:32 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 10:56:06 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 13:43:09 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,7 +89,6 @@ void IRCServer::sendJoinMessage(int clientSocket, std::string channel) {
     std::string joinMessage = getCommandPrefix(clientSocket) + "JOIN " + channel + "\r\n";
 
 	printResponse(SERVER, joinMessage);
-	printResponse(BROADCAST, joinMessage);
 	send(clientSocket, joinMessage.c_str(), joinMessage.size(), 0);
     broadcastMessage(clientSocket, joinMessage, channel);
 }
@@ -99,6 +98,14 @@ void IRCServer::handleJoinCommand(int clientSocket, std::istringstream & lineStr
 	lineStream >> channel >> key;
 
 	std::vector<std::string> inviteList = channelInfo_[channel].inviteList;
+
+	if (channel[0] != '#') {
+		std::string noSuchChannel = getServerReply(ERR_NOSUCHCHANNEL, clientSocket);
+		noSuchChannel += " " + channel + " :No such channel on ft_irc\r\n";
+		printResponse(SERVER, noSuchChannel);
+		send(clientSocket, noSuchChannel.c_str(), noSuchChannel.size(), 0);
+		return ;
+	}
 
 	//Error invite only
 	if (channelInfo_[channel].isInviteOnly && std::find(inviteList.begin(), inviteList.end(), userInfo_[clientSocket].nickname) == inviteList.end()) {

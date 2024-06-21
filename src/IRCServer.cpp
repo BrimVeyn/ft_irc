@@ -173,19 +173,30 @@ void IRCServer::acceptConnections() {
 }
 
 void IRCServer::broadcastMessage(int senderSocket, const std::string& message, const std::string& channel) {
-	printResponse(BROADCAST, message);
     for (size_t i = 0; i < clients_.size(); ++i) {
         int clientSocket = clients_[i];
 		// Get the iterator to the vector of channels for the given client
 		std::vector<std::string>& channels = userInfo_[clientSocket].channels;
+		std::vector<std::string>& channelss = userInfo_[senderSocket].channels;
 
 		// Use std::find to search for the channel
+		std::cout << clientSocket << " | " << senderSocket << std::endl;
+		for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); it++) {
+			std::cout << "CC " << *it << std::endl;
+		}
+		for (std::vector<std::string>::iterator it = channelss.begin(); it != channelss.end(); it++) {
+			std::cout << "CS " << *it << std::endl;
+		}
+
 		std::vector<std::string>::iterator it = std::find(channels.begin(), channels.end(), channel);
         if (clientSocket != senderSocket && it != channels.end()) {
+			printResponse(BROADCAST, "to client " + userInfo_[clientSocket].nickname + " " + message);
             if (send(clientSocket, message.c_str(), message.size(), 0) == -1) {
                 closeSocket(clientSocket);
             }
-        }
+        } else {
+			std::cout << "FAILED\n";
+		}
     }
 }
 
