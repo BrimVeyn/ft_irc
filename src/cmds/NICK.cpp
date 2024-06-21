@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 10:04:40 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 10:04:49 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 10:53:54 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,6 @@ void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStr
 
 	std::string response = getCommandPrefix(clientSocket) + "NICK :" + nickname + "\r\n";
 	userInfo_[clientSocket].nickname = nickname;
-
 	//Send nick Response
 	printResponse(SERVER, response);
     send(clientSocket, response.c_str(), response.size(), 0);
