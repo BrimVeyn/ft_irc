@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:51:20 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 16:14:36 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 10:19:04 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,8 @@ void IRCServer::handleKickCommand(int clientSocket, std::istringstream & lineStr
 		} else {
 			broadcastMessage(getClientSocket(user), serverResponse, channel);
 			removeMember(getClientSocket(user), channel);
+			channelInfo_[channel].userCount -= 1;
+			//userinfo
 		}
 	} else {
 		std::string serverResponse = getServerReply(ERR_CHANOPRIVSNEEDED, clientSocket);

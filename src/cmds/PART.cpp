@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:52:32 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 16:16:27 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 10:18:51 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,6 +43,7 @@ void IRCServer::handlePartCommand(int clientSocket, std::istringstream & lineStr
         broadcastMessage(clientSocket, user_message, channel);
 		channels.erase(it);
 		removeMember(clientSocket, channel);
+		// userInfo_[clientSocket].channels.erase()
 		channelInfo_[channel].userCount -= 1;
     }
 	//remove user from db

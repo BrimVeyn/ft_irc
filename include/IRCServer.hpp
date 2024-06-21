@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 10:04:19 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 10:04:20 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 10:14:04 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,6 +61,7 @@
 #define ERR_NOSUCHCHANNEL 403
 #define ERR_USERNOTINCHANNEL 441
 #define ERR_PASSWDMISMATCH 464
+#define ERR_ERRONEUSNICKNAME 432
 
 
 #define CLIENT_HEADER "[client] --> "
