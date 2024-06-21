@@ -194,10 +194,17 @@ void IRCServer::broadcastMessage(int senderSocket, const std::string& message, c
             if (send(clientSocket, message.c_str(), message.size(), 0) == -1) {
                 closeSocket(clientSocket);
             }
-        } else {
-			std::cout << "FAILED\n";
-		}
+        }
     }
+}
+
+bool IRCServer::filter(const std::string & nickname){
+	for (int i = 0; nickname[i]; i++){
+		if (std::isalnum(nickname[i]) == false){
+			return false;
+		}
+	}
+	return true;
 }
 
 void IRCServer::closeSocket(int client_socket) {

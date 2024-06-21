@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   PRIVMSG.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
+/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 12:05:59 by nbardavi          #+#    #+#             */
-/*   Updated: 2024/06/21 13:37:04 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 15:49:50 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,15 @@ int IRCServer::getClientSocket(const std::string &nickname){
 	}
 	return -1;
 }
-// :NICKNAME!USER@HOST PRIVMSG <target> :<message>
+
+static bool nickFilter(const std::string & nickname){
+	for (int i = 0; nickname[i]; i++){
+		if (std::isalnum(nickname[i]) == false && nickname[i] != '-'){
+			return false;
+		}
+	}
+	return true;
+}
 
 void IRCServer::handlePrivmsgCommand(int clientSocket, std::istringstream & lineStream) {
 
@@ -33,6 +41,15 @@ void IRCServer::handlePrivmsgCommand(int clientSocket, std::istringstream & line
     lineStream >> target;
     std::string privmsg;
     std::getline(lineStream, privmsg);
+	
+	if (nickFilter(target) == false){
+		std::string invalidNickname = getServerReply(ERR_ERRONEUSNICKNAME, clientSocket);
+		invalidNickname += " " + target + " :Erroneus nickname\r\n";
+		printResponse(SERVER, invalidNickname);
+		send(clientSocket, invalidNickname.c_str(), invalidNickname.size(), 0);
+		return ;
+	}
+
     std::string formattedMessage = getCommandPrefix(clientSocket) + "PRIVMSG " + target + privmsg + "\r\n" ;
     if (target[0] == '#'){
         broadcastMessage(clientSocket, formattedMessage, target);

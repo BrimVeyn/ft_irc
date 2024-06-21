@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   IRCServer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
+/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 10:04:19 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 14:06:40 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 15:41:25 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -152,6 +152,8 @@ private:
 	//------------------------//
 
 	void removeMember(int clientSocket, std::string channel); //Remove a member from a channel (KICK / PART)//
+	//
+	bool filter(const std::string & nickname);
 
 	//-------Mode command------//
 	void modeSplitter(int clientSocket, std::string channel, std::string mode, std::string mode_option);

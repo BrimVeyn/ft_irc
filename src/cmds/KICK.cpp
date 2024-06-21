@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   KICK.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
+/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:51:20 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 14:20:02 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 15:41:53 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,15 @@ void IRCServer::handleKickCommand(int clientSocket, std::istringstream & lineStr
 	reason = lineStream.str();
 	reason = reason.substr(reason.find(":"));
 	
+	
+	if (filter(user) == false) {
+		std::string serverResponse = getServerReply(ERR_NOSUCHNICK, clientSocket);
+		serverResponse += " " + user + " :Invalid username\r\n";
+		printResponse(SERVER, serverResponse);
+		send(clientSocket, serverResponse.c_str(), serverResponse.size(), 0);
+		return ;
+	}
+
 	if (isOperator("@" + userInfo_[clientSocket].nickname, channel)) {
 
 		//---------CAN KICK OPERATOR ERROR---//
