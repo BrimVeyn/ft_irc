@@ -6,7 +6,7 @@
 /*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:52:32 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 15:46:36 by nbardavi         ###   ########.fr       */
+/*   Updated: 2024/06/21 16:39:19 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,25 +24,19 @@ void IRCServer::removeMember(int clientSocket, std::string channel) {
 		operatorVect.erase(it);
 	}
 	std::vector<std::string> & userChannels = userInfo_[clientSocket].channels;
-	userChannels.erase(std::find(userChannels.begin(), userChannels.end(), channel));
-	channelInfo_[channel].userCount -= 1;
-}
-
-static bool channelFilter(const std::string & nickname){
-	for (int i = 1; nickname[i]; i++){
-		if (std::isalnum(nickname[i]) == false){
-			return false;
-		}
+	it = userChannels.begin();
+	if ((it = std::find(userChannels.begin(), userChannels.end(), channel)) != userChannels.end()){
+		userChannels.erase(it);
+		channelInfo_[channel].userCount -= 1;
 	}
-	return true;
 }
 
 void IRCServer::handlePartCommand(int clientSocket, std::istringstream & lineStream) {
 
 	std::string channel;
 	lineStream >> channel;
-
-	if (channel[0] != '#' || channelFilter(channel) == false) {
+	
+	if (isValidChannel(channel) == false) {
 		std::string noSuchChannel = getServerReply(ERR_NOSUCHCHANNEL, clientSocket);
 		noSuchChannel += " " + channel + " :No such channel on ft_irc\r\n";
 		printResponse(SERVER, noSuchChannel);

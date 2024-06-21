@@ -6,7 +6,7 @@
 /*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 12:05:59 by nbardavi          #+#    #+#             */
-/*   Updated: 2024/06/21 15:49:50 by nbardavi         ###   ########.fr       */
+/*   Updated: 2024/06/21 16:27:01 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,15 +26,6 @@ int IRCServer::getClientSocket(const std::string &nickname){
 	return -1;
 }
 
-static bool nickFilter(const std::string & nickname){
-	for (int i = 0; nickname[i]; i++){
-		if (std::isalnum(nickname[i]) == false && nickname[i] != '-'){
-			return false;
-		}
-	}
-	return true;
-}
-
 void IRCServer::handlePrivmsgCommand(int clientSocket, std::istringstream & lineStream) {
 
     std::string target;
@@ -42,19 +33,31 @@ void IRCServer::handlePrivmsgCommand(int clientSocket, std::istringstream & line
     std::string privmsg;
     std::getline(lineStream, privmsg);
 	
-	if (nickFilter(target) == false){
-		std::string invalidNickname = getServerReply(ERR_ERRONEUSNICKNAME, clientSocket);
-		invalidNickname += " " + target + " :Erroneus nickname\r\n";
-		printResponse(SERVER, invalidNickname);
-		send(clientSocket, invalidNickname.c_str(), invalidNickname.size(), 0);
-		return ;
-	}
 
     std::string formattedMessage = getCommandPrefix(clientSocket) + "PRIVMSG " + target + privmsg + "\r\n" ;
     if (target[0] == '#'){
+		//------------- Filter --------------//
+		if (isValidChannel(target) == false){
+		std::string noSuchChannel = getServerReply(ERR_NOSUCHCHANNEL, clientSocket);
+		noSuchChannel += " " + target + " :No such channel on ft_irc\r\n";
+		printResponse(SERVER, noSuchChannel);
+		send(clientSocket, noSuchChannel.c_str(), noSuchChannel.size(), 0);
+		return ;
+		}
+		//----------------------------------//
+
         broadcastMessage(clientSocket, formattedMessage, target);
         return;
     }
-    printResponse(SERVER, formattedMessage);
-    send(getClientSocket(target), formattedMessage.c_str(), formattedMessage.size(), 0);
+	
+	//------------- Sending msg and error handling --------------//
+    if (send(getClientSocket(target), formattedMessage.c_str(), formattedMessage.size(), 0) == -1){
+		std::string serverResponse = getServerReply(ERR_NOSUCHNICK, clientSocket);
+		serverResponse += " " + target + " :No such nick in ft_irc\r\n";
+		printResponse(SERVER, serverResponse);
+		send(clientSocket, serverResponse.c_str(), serverResponse.size(), 0);
+		return;
+	}
+	//------------- Filter --------------//
+	printResponse(SERVER, formattedMessage);
 }

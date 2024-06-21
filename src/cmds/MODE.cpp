@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   MODE.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
+/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 10:05:26 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 14:46:23 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 16:09:56 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -154,6 +154,15 @@ void IRCServer::inviteModeManager(int clientSocket, std::string channel, std::st
 }
 
 void IRCServer::updateChannelMode(int clientSocket, std::string channel, std::string mode, std::string mode_option) {
+
+	if (isValidChannel(channel) == false) {
+		std::string noSuchChannel = getServerReply(ERR_NOSUCHCHANNEL, clientSocket);
+		noSuchChannel += " " + channel + " :No such channel on ft_irc\r\n";
+		printResponse(SERVER, noSuchChannel);
+		send(clientSocket, noSuchChannel.c_str(), noSuchChannel.size(), 0);
+		return ;
+	}
+
 	if (!mode.size() && !mode_option.size()) {
 		//Print current channel modes
 		std::string serverResponse = getServerReply(RPL_CHANNELMODEIS, clientSocket);

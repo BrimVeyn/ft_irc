@@ -6,7 +6,7 @@
 /*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 10:05:00 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 15:42:16 by nbardavi         ###   ########.fr       */
+/*   Updated: 2024/06/21 16:08:39 by nbardavi         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -87,7 +87,7 @@ void IRCServer::handleUserCommand(int clientSocket, std::istringstream & lineStr
 
 	handleUsernameCollision(clientSocket, username);
 	
-	if (filter(username) == false){
+	if (isValidNickname(username) == false){
 		std::string invalidNickname = getServerReply(ERR_ERRONEUSNICKNAME, clientSocket);
 		invalidNickname += " " + username + " :Erroneus username\r\n";
 		printResponse(SERVER, invalidNickname);
