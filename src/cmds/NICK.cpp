@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   NICK.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
+/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/20 11:03:17 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/20 11:48:31 by nbardavi         ###   ########.fr       */
+/*   Updated: 2024/06/21 11:08:33 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,28 @@ void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStr
 	}
 	//-----------------------------------------//
 
+    // ----- Change nickname dans les channels ----- //
+    std::map<std::string, channelInfo>::iterator it = channelInfo_.begin();
+    for (;it != channelInfo_.end(); it++){
+        std::vector<std::string>::iterator m_it = it->second.members.begin();
+        std::vector<std::string>::iterator o_it = it->second.operators.begin();
+        for (; m_it != it->second.members.end(); m_it++){
+            // std::cout << YELLOW << "[DEBUG] comparing members: " << *m_it << " " << userInfo_[clientSocket].nickname << RESET_COLOR << std::endl;
+            if (*m_it == userInfo_[clientSocket].nickname){
+                *m_it = nickname;
+                break;
+            }
+        }
+        for (; o_it != it->second.operators.end(); o_it++){
+            // std::cout << YELLOW << "[DEBUG] comparing operators: " << *o_it << " " << '@' + userInfo_[clientSocket].nickname << RESET_COLOR << std::endl;
+            if (*o_it == '@' + userInfo_[clientSocket].nickname){
+                *o_it = nickname;
+                break;
+            }
+        }
+    }
+    //-----------------------------------------//
+	
 	std::string response = getCommandPrefix(clientSocket) + "NICK :" + nickname + "\r\n";
 	userInfo_[clientSocket].nickname = nickname;
 
