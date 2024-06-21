@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:50:32 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 10:17:53 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 10:56:06 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,6 +84,16 @@ void IRCServer::sendChannelTopic(int clientSocket, std::string channel) {
 	}
 }
 
+
+void IRCServer::sendJoinMessage(int clientSocket, std::string channel) {
+    std::string joinMessage = getCommandPrefix(clientSocket) + "JOIN " + channel + "\r\n";
+
+	printResponse(SERVER, joinMessage);
+	printResponse(BROADCAST, joinMessage);
+	send(clientSocket, joinMessage.c_str(), joinMessage.size(), 0);
+    broadcastMessage(clientSocket, joinMessage, channel);
+}
+
 void IRCServer::handleJoinCommand(int clientSocket, std::istringstream & lineStream) {
 	std::string channel, key;
 	lineStream >> channel >> key;
@@ -127,15 +137,14 @@ void IRCServer::handleJoinCommand(int clientSocket, std::istringstream & lineStr
 	}
 
 	///--------JOIN message -----//
-    std::string joinMessage = getCommandPrefix(clientSocket) + "JOIN " + channel + "\r\n";
-
-	send(clientSocket, joinMessage.c_str(), joinMessage.size(), 0);
-    broadcastMessage(clientSocket, joinMessage, channel);
+	sendJoinMessage(clientSocket, channel);
 	//-------------------------//
 
 	//display member list;
 	sendChannelMemberList(clientSocket, channel);
+	//-------------------------//
 
 	//display topic;
 	sendChannelTopic(clientSocket, channel);
+	//-------------------------//
 }

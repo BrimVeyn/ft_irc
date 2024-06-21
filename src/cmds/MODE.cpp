@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 10:05:26 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 10:05:28 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 11:06:22 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,55 +14,11 @@
 #include <cstdlib>
 #include <sstream>
 
-void IRCServer::printResponse(int mode, std::string message) {
-	if (mode == CLIENT) {
-		std::cout << CLIENT_HEADER << MAGENTA;
-	} else if (mode == SERVER) {
-		message = message.substr(0, message.size() - 2);
-		std::cout << SERVER_HEADER << RED;
-	} else if (mode == BROADCAST) {
-		message = message.substr(0, message.size() - 2);
-		std::cout << BROADCAST_HEADER << GREEN;
-	}
-	std::cout << message << RESET_COLOR << std::endl;
-}
-
-bool IRCServer::isUser(const std::string & str) {
-	std::map<int, userInfo>::iterator it = userInfo_.begin();
-	for (; it != userInfo_.end(); it++){
-		if (it->second.nickname == str)
-			return true;
-	}
-	return false;
-}
-
-int	IRCServer::getClientSocketFromUsername(const std::string &username) {
-	std::map<int, userInfo>::iterator it = userInfo_.begin();
-	for (; it != userInfo_.end(); it++){
-		if (it->second.username == username)
-			return it->first;
-	}
-	return -1;
-}
-
 void IRCServer::updateUserMode(int clientSocket, std::string user, std::string mode) {
 	std::string modeResponse = getCommandPrefix(clientSocket);
 	modeResponse += "MODE " + user + " " + mode + "\r\n";
 	printResponse(SERVER, modeResponse);
 	send(clientSocket, modeResponse.c_str(), modeResponse.size(), 0);
-}
-
-bool IRCServer::isOperator(std::string nickname, std::string channel) {
-	std::vector<std::string> operators = channelInfo_[channel].operators;
-	if (std::find(operators.begin(), operators.end(), nickname) != operators.end())
-		return true;
-	return false;
-}
-
-bool IRCServer::isModeValid(std::string mode) {
-	if (availableModes_.find(mode) != std::string::npos)
-		return true;
-	return false;
 }
 
 void IRCServer::keyModeManager(int clientSocket, std::string channel, std::string mode, std::string mode_option) {
@@ -190,44 +146,6 @@ void IRCServer::inviteModeManager(int clientSocket, std::string channel, std::st
 	broadcastMessage(clientSocket, modeResponse, channel);
 }
 
-void IRCServer::modeSplitter(int clientSocket, std::string channel, std::string mode, std::string mode_option) {
-	switch (mode[1]) {
-		case 'k':
-			keyModeManager(clientSocket, channel, mode, mode_option);
-			break;
-		case 'o':
-			operatorModeManager(clientSocket, channel, mode, mode_option);
-			break;
-		case 'l':
-			userLimitModeManager(clientSocket, channel, mode, mode_option);
-			break;
-		case 't':
-			topicLockModeManager(clientSocket, channel, mode);
-			break;
-		case 'i':
-			inviteModeManager(clientSocket, channel, mode);
-	};
-}
-
-std::string IRCServer::gatherModes(std::string channel) {
-	channelInfo chan = channelInfo_[channel];
-	std::string modesNParams;
-
-	if (!chan.userLimit && !chan.isInviteOnly && !chan.isTopicProtected && !chan.key.size()) {
-		return modesNParams;
-	} else {
-		std::stringstream uLimit;
-		uLimit << chan.userLimit;
-		modesNParams += " +";
-		if (chan.userLimit) modesNParams += "l";
-		if (chan.isInviteOnly) modesNParams += "i";
-		if (chan.isTopicProtected) modesNParams += "t";
-		if (chan.key.size()) modesNParams += "k " + chan.key;
-		if (chan.userLimit) modesNParams += " " + uLimit.str();
-	}
-	return modesNParams;
-}
-
 void IRCServer::updateChannelMode(int clientSocket, std::string channel, std::string mode, std::string mode_option) {
 	if (!mode.size() && !mode_option.size()) {
 		//Print current channel modes
@@ -259,6 +177,44 @@ void IRCServer::updateChannelMode(int clientSocket, std::string channel, std::st
 		send(clientSocket, serverResponse.c_str(), serverResponse.size(), 0);
 		return ;
 	}
+}
+
+std::string IRCServer::gatherModes(std::string channel) {
+	channelInfo chan = channelInfo_[channel];
+	std::string modesNParams;
+
+	if (!chan.userLimit && !chan.isInviteOnly && !chan.isTopicProtected && !chan.key.size()) {
+		return modesNParams;
+	} else {
+		std::stringstream uLimit;
+		uLimit << chan.userLimit;
+		modesNParams += " +";
+		if (chan.userLimit) modesNParams += "l";
+		if (chan.isInviteOnly) modesNParams += "i";
+		if (chan.isTopicProtected) modesNParams += "t";
+		if (chan.key.size()) modesNParams += "k " + chan.key;
+		if (chan.userLimit) modesNParams += " " + uLimit.str();
+	}
+	return modesNParams;
+}
+
+void IRCServer::modeSplitter(int clientSocket, std::string channel, std::string mode, std::string mode_option) {
+	switch (mode[1]) {
+		case 'k':
+			keyModeManager(clientSocket, channel, mode, mode_option);
+			break;
+		case 'o':
+			operatorModeManager(clientSocket, channel, mode, mode_option);
+			break;
+		case 'l':
+			userLimitModeManager(clientSocket, channel, mode, mode_option);
+			break;
+		case 't':
+			topicLockModeManager(clientSocket, channel, mode);
+			break;
+		case 'i':
+			inviteModeManager(clientSocket, channel, mode);
+	};
 }
 
 void IRCServer::handleModeCommand(int clientSocket, std::istringstream & lineStream) {
