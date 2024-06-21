@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 10:04:40 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 12:00:30 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 13:21:33 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <sstream>
 #include <map>
+#include <vector>
 
 std::string addNumberToStr(const std::string & nickname, int nb) {
 	std::stringstream ss;
@@ -84,5 +85,13 @@ void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStr
 	//Send nick Response
 	printResponse(SERVER, response);
     send(clientSocket, response.c_str(), response.size(), 0);
+
+	//Broadcast nick change to all channel the users's in
+	std::vector<std::string> userChannels = userInfo_[clientSocket].channels;
+	std::vector<std::string>::iterator it = userChannels.begin();
+
+	for (; it != userChannels.end(); it++) {
+		broadcastMessage(clientSocket, response, *it);
+	}
 	//-----------------------------------------//
 }
