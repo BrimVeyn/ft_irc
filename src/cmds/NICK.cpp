@@ -6,12 +6,14 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 10:04:40 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 11:11:34 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 12:00:30 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/IRCServer.hpp"
+#include <algorithm>
 #include <sstream>
+#include <map>
 
 std::string addNumberToStr(const std::string & nickname, int nb) {
 	std::stringstream ss;
@@ -42,6 +44,20 @@ void IRCServer::handleNickCollision(int clientSocket, std::string & nickname) {
 		nickname = addNumberToStr(nickname, suffix);
 }
 
+struct ReplaceNick {
+	const std::string& oldNick;
+	const std::string& newNick;
+
+	ReplaceNick(const std::string& oldNick, const std::string& newNick) : oldNick(oldNick), newNick(newNick) {}
+
+	void operator()(std::pair<const std::string, channelInfo>& channel) const {
+		std::vector<std::string>& members = channel.second.members;
+		std::vector<std::string>& operators = channel.second.operators;
+		std::replace(members.begin(), members.end(), oldNick, newNick);
+		std::replace(operators.begin(), operators.end(), "@" + oldNick, "@" + newNick);
+	}
+};
+
 // Gestion de la commande NICK
 void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStream) {
 	std::string nickname;
@@ -59,25 +75,8 @@ void IRCServer::handleNickCommand(int clientSocket, std::istringstream & lineStr
 	//-----------------------------------------//
 
     // ----- Change nickname dans les channels ----- //
-    std::map<std::string, channelInfo>::iterator it = channelInfo_.begin();
-    for (;it != channelInfo_.end(); it++){
-        std::vector<std::string>::iterator m_it = it->second.members.begin();
-        std::vector<std::string>::iterator o_it = it->second.operators.begin();
-        for (; m_it != it->second.members.end(); m_it++){
-            // std::cout << YELLOW << "[DEBUG] comparing members: " << *m_it << " " << userInfo_[clientSocket].nickname << RESET_COLOR << std::endl;
-            if (*m_it == userInfo_[clientSocket].nickname){
-                *m_it = nickname;
-                break;
-            }
-        }
-        for (; o_it != it->second.operators.end(); o_it++){
-            // std::cout << YELLOW << "[DEBUG] comparing operators: " << *o_it << " " << '@' + userInfo_[clientSocket].nickname << RESET_COLOR << std::endl;
-            if (*o_it == '@' + userInfo_[clientSocket].nickname){
-                *o_it = nickname;
-                break;
-            }
-        }
-    }
+	std::string oldNick = userInfo_[clientSocket].nickname;
+    std::for_each(channelInfo_.begin(), channelInfo_.end(), ReplaceNick(oldNick, nickname));
     //-----------------------------------------//
 	
 	std::string response = getCommandPrefix(clientSocket) + "NICK :" + nickname + "\r\n";
