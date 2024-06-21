@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 10:05:26 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 11:06:22 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 14:46:23 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,6 @@ void IRCServer::keyModeManager(int clientSocket, std::string channel, std::strin
 			channelInfo_[channel].key = mode_option;
 			std::string modeResponse = SERVER_NAME;
 			modeResponse += "MODE " + channel + " " + mode + " " + mode_option + "\r\n";
-			printResponse(BROADCAST, modeResponse);
 			printResponse(SERVER, modeResponse);
 			send(clientSocket, modeResponse.c_str(), modeResponse.size(), 0);
 			broadcastMessage(clientSocket, modeResponse, channel);
@@ -36,7 +35,7 @@ void IRCServer::keyModeManager(int clientSocket, std::string channel, std::strin
         } else {
 			//needmore params;
 			std::string serverResponse = getServerReply(ERR_NEEDMOREPARAMS, clientSocket);
-			serverResponse += " " + channel + " " + mode + " :Need a key\r\n";
+			serverResponse += " " + channel + " " + mode + " :Need more params (key)\r\n";
 			printResponse(SERVER, serverResponse);
 			send(clientSocket, serverResponse.c_str(), serverResponse.size(), 0);
 			return ;
@@ -53,7 +52,6 @@ void IRCServer::keyModeManager(int clientSocket, std::string channel, std::strin
 		channelInfo_[channel].key.erase();
 		std::string modeResponse = SERVER_NAME;
 		modeResponse += "MODE " + channel + " " + mode + "\r\n";
-		printResponse(BROADCAST, modeResponse);
 		printResponse(SERVER, modeResponse);
 		send(clientSocket, modeResponse.c_str(), modeResponse.size(), 0);
 		broadcastMessage(clientSocket, modeResponse, channel);
@@ -61,6 +59,15 @@ void IRCServer::keyModeManager(int clientSocket, std::string channel, std::strin
 }
 
 void IRCServer::operatorModeManager(int clientSocket, std::string channel, std::string mode, std::string mode_option) {
+	//Errror need more params
+	if (!mode_option.size()) { 
+		std::string serverResponse = getServerReply(ERR_NEEDMOREPARAMS, clientSocket);
+		serverResponse += " " + channel + " " + mode + " :Need more params (nickname)\r\n";
+		printResponse(SERVER, serverResponse);
+		send(clientSocket, serverResponse.c_str(), serverResponse.size(), 0);
+		return ;
+	}
+
 	if (getMemberList(channel).find(mode_option) == std::string::npos) {
 		//send error no such nick
 		std::string serverResponse = getServerReply(ERR_NOSUCHNICK, clientSocket);
@@ -69,6 +76,7 @@ void IRCServer::operatorModeManager(int clientSocket, std::string channel, std::
 		send(clientSocket, serverResponse.c_str(), serverResponse.size(), 0);
 		return ;
 	}
+
 	if (mode == "+o") {
 		//put in operator
 		removeMember(getClientSocket(mode_option), channel);
@@ -79,9 +87,11 @@ void IRCServer::operatorModeManager(int clientSocket, std::string channel, std::
 		channelInfo_[channel].members.push_back(mode_option);
 	}
 
+	userInfo_[getClientSocket(mode_option)].channels.push_back(channel);
+	channelInfo_[channel].userCount += 1;
+
 	std::string modeResponse = SERVER_NAME;
 	modeResponse += "MODE " + channel + " " + mode + " " + mode_option + "\r\n";
-	printResponse(BROADCAST, modeResponse);
 	printResponse(SERVER, modeResponse);
 	send(clientSocket, modeResponse.c_str(), modeResponse.size(), 0);
 	broadcastMessage(clientSocket, modeResponse, channel);
@@ -109,7 +119,6 @@ void IRCServer::userLimitModeManager(int clientSocket, std::string channel, std:
 	if (mode_option.size())
 		modeResponse += " " + mode_option;
 	modeResponse += "\r\n";
-	printResponse(BROADCAST, modeResponse);
 	printResponse(SERVER, modeResponse);
 	send(clientSocket, modeResponse.c_str(), modeResponse.size(), 0);
 	broadcastMessage(clientSocket, modeResponse, channel);
@@ -125,7 +134,6 @@ void IRCServer::topicLockModeManager(int clientSocket, std::string channel, std:
 
 	std::string modeResponse = SERVER_NAME;
 	modeResponse += "MODE " + channel + " " + mode + "\r\n";
-	printResponse(BROADCAST, modeResponse);
 	printResponse(SERVER, modeResponse);
 	send(clientSocket, modeResponse.c_str(), modeResponse.size(), 0);
 	broadcastMessage(clientSocket, modeResponse, channel);
@@ -140,7 +148,6 @@ void IRCServer::inviteModeManager(int clientSocket, std::string channel, std::st
 
 	std::string modeResponse = SERVER_NAME;
 	modeResponse += "MODE " + channel + " " + mode + "\r\n";
-	printResponse(BROADCAST, modeResponse);
 	printResponse(SERVER, modeResponse);
 	send(clientSocket, modeResponse.c_str(), modeResponse.size(), 0);
 	broadcastMessage(clientSocket, modeResponse, channel);

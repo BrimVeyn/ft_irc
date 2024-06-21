@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/17 16:51:20 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 11:59:32 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 14:20:02 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,17 @@ void IRCServer::handleKickCommand(int clientSocket, std::istringstream & lineStr
 	reason = reason.substr(reason.find(":"));
 	
 	if (isOperator("@" + userInfo_[clientSocket].nickname, channel)) {
+
+		//---------CAN KICK OPERATOR ERROR---//
+		if (isOperator("@" + user, channel)) {
+			std::string cantKick = getServerReply(ERR_CANTKICKADMIN, clientSocket);
+			cantKick += " " + user + " :can't kick channel operator\r\n";
+			printResponse(SERVER, cantKick);
+			send(clientSocket, cantKick.c_str(), cantKick.size(), 0);
+			return ;
+		}
+		//-----------------------------------//
+
 		std::string serverResponse = getCommandPrefix(clientSocket);
 		serverResponse += "KICK " + channel + " " + user + " ";
 		if (reason.size() == 1)

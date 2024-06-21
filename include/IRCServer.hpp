@@ -6,7 +6,7 @@
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 10:04:19 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 12:12:17 by bvan-pae         ###   ########.fr       */
+/*   Updated: 2024/06/21 14:06:40 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,6 +65,7 @@
 #define ERR_USERNOTINCHANNEL 441
 #define ERR_PASSWDMISMATCH 464
 #define ERR_ERRONEUSNICKNAME 432
+#define ERR_CANTKICKADMIN 485
 //----------------------------//
 
 
@@ -172,6 +173,7 @@ private:
 	void printResponse(int mode, std::string message);
 	void broadcastMessage(int senderSocket, const std::string& message, const std::string& channel);
 	void broadCastToChannel(std::string channel, int clientSocket, std::string clientResponse);
+	void sendToOtherChannels(int clientSocket, std::string response);
 
 	struct sigaction sa;
 	static void cleanup();

@@ -5,8 +5,8 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/06/17 16:50:50 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 12:00:27 by bvan-pae         ###   ########.fr       */
+/*   Created: 2024/06/21 12:05:59 by nbardavi          #+#    #+#             */
+/*   Updated: 2024/06/21 13:37:04 by bvan-pae         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,6 @@ void IRCServer::handlePrivmsgCommand(int clientSocket, std::istringstream & line
     std::getline(lineStream, privmsg);
     std::string formattedMessage = getCommandPrefix(clientSocket) + "PRIVMSG " + target + privmsg + "\r\n" ;
     if (target[0] == '#'){
-        printResponse(BROADCAST, formattedMessage);
         broadcastMessage(clientSocket, formattedMessage, target);
         return;
     }
