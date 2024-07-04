@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   IRCServer.hpp                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+        */
+/*   By: albeninc <albeninc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/06/21 10:04:19 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 16:06:30 by nbardavi         ###   ########.fr       */
+/*   Updated: 2024/07/04 16:04:08 by albeninc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,6 +30,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <poll.h>
+#include "Bot.hpp"
 
 #define RESET_COLOR "\033[0m"
 #define BLACK "\033[30m"
@@ -108,7 +109,9 @@ class IRCServer {
 public:
     IRCServer(int port, const std::string& password);
     ~IRCServer();
+	Bot Bot_;
     void start();
+	void handleGameCommand(int clientSocket, const std::string& message);
 
 private:
 
