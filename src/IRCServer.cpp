@@ -6,7 +6,7 @@
 /*   By: albeninc <albeninc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/04 17:28:06 by albeninc          #+#    #+#             */
-/*   Updated: 2024/07/04 17:28:07 by albeninc         ###   ########.fr       */
+/*   Updated: 2024/07/04 18:38:34 by albeninc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -144,7 +144,7 @@ void IRCServer::start() {
 }
 
 void IRCServer::acceptConnections() {
-    struct pollfd server_fd;
+    struct pollfd server_fd = {};
     server_fd.fd = serverSocket_;
     server_fd.events = POLLIN;
     poll_fds_.push_back(server_fd);
@@ -160,21 +160,22 @@ void IRCServer::acceptConnections() {
         for (size_t i = 0; i < poll_fds_.size(); ++i) {
             if (poll_fds_[i].revents & POLLIN) {
                 if (poll_fds_[i].fd == serverSocket_) {
-                    sockaddr_in clientAddr;
+                    sockaddr_in clientAddr = {};
                     socklen_t clientAddrLen = sizeof(clientAddr);
                     int clientSocket = accept(serverSocket_, (struct sockaddr*)&clientAddr, &clientAddrLen);
                     if (clientSocket == -1) {
                         std::cerr << "Failed to accept client: " << strerror(errno) << std::endl;
                         continue;
                     }
-					
-                    struct pollfd client_fd;
+
+                    struct pollfd client_fd = {};
                     client_fd.fd = clientSocket;
                     client_fd.events = POLLIN;
                     poll_fds_.push_back(client_fd);
 
+                    userInfo_[clientSocket].is_authenticated = false;
                     clients_.push_back(clientSocket);
-					userInfo_[clientSocket].is_authenticated = false;
+
                     std::cout << SERVER_HEADER << YELLOW << "New client connected: " << inet_ntoa(clientAddr.sin_addr) << RESET_COLOR << std::endl;
                 } else {
                     handleClient(poll_fds_[i].fd);
@@ -183,6 +184,7 @@ void IRCServer::acceptConnections() {
         }
     }
 }
+
 
 void IRCServer::broadcastMessage(int senderSocket, const std::string& message, const std::string& channel) {
     for (size_t i = 0; i < clients_.size(); ++i) {
