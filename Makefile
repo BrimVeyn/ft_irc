@@ -3,15 +3,16 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: nbardavi <nbabardavid@gmail.com>           +#+  +:+       +#+         #
+#    By: albeninc <albeninc@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2024/03/15 11:21:29 by bvan-pae          #+#    #+#              #
-#    Updated: 2024/06/20 11:36:25 by nbardavi         ###   ########.fr        #
+#    Created: 2024/07/04 17:28:17 by albeninc          #+#    #+#              #
+#    Updated: 2024/07/04 17:28:26 by albeninc         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-CPP     := g++
-CFLAGS  := -Wall -Wextra -Werror -std=c++98 -g3
+
+CPP     := c++
+CFLAGS  := -Wall -Wextra -Werror -std=c++98
 
 NAME    := ircserv
 

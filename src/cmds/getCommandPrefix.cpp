@@ -3,12 +3,13 @@
 /*                                                        :::      ::::::::   */
 /*   getCommandPrefix.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
+/*   By: albeninc <albeninc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/06/18 16:12:39 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/19 16:32:35 by bvan-pae         ###   ########.fr       */
+/*   Created: 2024/07/04 17:26:44 by albeninc          #+#    #+#             */
+/*   Updated: 2024/07/04 17:26:45 by albeninc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include "../../include/IRCServer.hpp"
 
