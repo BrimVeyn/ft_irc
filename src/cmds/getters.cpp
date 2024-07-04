@@ -3,12 +3,13 @@
 /*                                                        :::      ::::::::   */
 /*   getters.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: bvan-pae <bryan.vanpaemel@gmail.com>       +#+  +:+       +#+        */
+/*   By: albeninc <albeninc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/06/21 11:04:12 by bvan-pae          #+#    #+#             */
-/*   Updated: 2024/06/21 11:04:49 by bvan-pae         ###   ########.fr       */
+/*   Created: 2024/07/04 17:26:51 by albeninc          #+#    #+#             */
+/*   Updated: 2024/07/04 17:26:55 by albeninc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
+
 
 #include "../../include/IRCServer.hpp"
 
