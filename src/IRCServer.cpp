@@ -235,6 +235,10 @@ bool IRCServer::isValidChannel(const std::string& channel) {
 }
 
 void IRCServer::closeSocket(int client_socket) {
+    std::vector<std::string> channels = userInfo_[client_socket].channels;
+    for (std::vector<std::string>::iterator it = channels.begin(); it != channels.end(); ++it) {
+        removeMember(client_socket, *it);
+    }
     close(client_socket);
     poll_fds_.erase(std::remove_if(poll_fds_.begin(), poll_fds_.end(), FdComparator(client_socket)), poll_fds_.end());
     clients_.erase(std::remove(clients_.begin(), clients_.end(), client_socket), clients_.end());
