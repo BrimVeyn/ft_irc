@@ -6,7 +6,7 @@
 /*   By: albeninc <albeninc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/04 15:30:56 by albeninc          #+#    #+#             */
-/*   Updated: 2024/07/05 16:20:59 by albeninc         ###   ########.fr       */
+/*   Updated: 2024/07/05 16:26:30 by albeninc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,8 +36,6 @@ int IRCServer::getClientSocket(const std::string &nickname){
 }
 
 void IRCServer::handleFileCommand(int clientSocket, const std::string& message) {
-    std::cout << "handleFileCommand called with message: " << message << std::endl;
-
     std::istringstream lineStream(message);
     std::string target;
     std::string fileName;
@@ -47,11 +45,9 @@ void IRCServer::handleFileCommand(int clientSocket, const std::string& message) 
         target = target.substr(1);
     }
 
-    std::cout << "Parsed target: " << target << ", fileName: " << fileName << std::endl;
 
     if (target.empty() || fileName.empty()) {
         std::string errorMessage = getCommandPrefix(clientSocket) + "PRIVMSG " + target + " :Usage: FILE <target> <filename>\r\n";
-        std::cout << "Sending error message: " << errorMessage << std::endl;
         send(clientSocket, errorMessage.c_str(), errorMessage.length(), 0);
         return;
     }
@@ -59,13 +55,11 @@ void IRCServer::handleFileCommand(int clientSocket, const std::string& message) 
     std::ifstream file(fileName.c_str(), std::ios::binary);
     if (!file) {
         std::string errorMessage = getCommandPrefix(clientSocket) + "PRIVMSG " + target + " :Could not open file\r\n";
-        std::cout << "Sending error message: " << errorMessage << std::endl;
         send(clientSocket, errorMessage.c_str(), errorMessage.length(), 0);
         return;
     }
 
     std::vector<char> fileData((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-    std::cout << "Read " << fileData.size() << " bytes from file: " << fileName << std::endl;
 
     std::string directory = "./received_files/";
     mkdir(directory.c_str(), 0777);
@@ -74,23 +68,19 @@ void IRCServer::handleFileCommand(int clientSocket, const std::string& message) 
     std::ofstream outFile(filePath.c_str(), std::ios::binary);
     if (!outFile) {
         std::string errorMessage = getCommandPrefix(clientSocket) + "PRIVMSG " + target + " :Could not write file to directory\r\n";
-        std::cout << "Sending error message: " << errorMessage << std::endl;
         send(clientSocket, errorMessage.c_str(), errorMessage.length(), 0);
         return;
     }
 
     outFile.write(&fileData[0], fileData.size());
     outFile.close();
-    std::cout << "Stored file at: " << filePath << std::endl;
 
     std::ostringstream convert;
     convert << clientSocket;
     std::string clientSocketStr = convert.str();
 
     std::string successMessageToSender = getCommandPrefix(clientSocket) + "PRIVMSG " + clientSocketStr + " :File " + fileName + " stored successfully in " + filePath + "\r\n";
-    std::cout << "Sending success message to sender: " << successMessageToSender << std::endl;
     send(clientSocket, successMessageToSender.c_str(), successMessageToSender.length(), 0);
-
 
 }
 
