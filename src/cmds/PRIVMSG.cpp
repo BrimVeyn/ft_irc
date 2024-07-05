@@ -6,13 +6,22 @@
 /*   By: albeninc <albeninc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/04 15:30:56 by albeninc          #+#    #+#             */
-/*   Updated: 2024/07/04 16:08:47 by albeninc         ###   ########.fr       */
+/*   Updated: 2024/07/05 16:20:59 by albeninc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../include/IRCServer.hpp"
-#include <iterator>
+
+#include <fstream>
 #include <sstream>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <iterator>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
 
 //if target is user --> send user
 //if target is channel --> broadcast channel
@@ -26,17 +35,74 @@ int IRCServer::getClientSocket(const std::string &nickname){
 	return -1;
 }
 
+void IRCServer::handleFileCommand(int clientSocket, const std::string& message) {
+    std::cout << "handleFileCommand called with message: " << message << std::endl;
+
+    std::istringstream lineStream(message);
+    std::string target;
+    std::string fileName;
+    lineStream >> target >> fileName;
+
+    if (!target.empty()) {
+        target = target.substr(1);
+    }
+
+    std::cout << "Parsed target: " << target << ", fileName: " << fileName << std::endl;
+
+    if (target.empty() || fileName.empty()) {
+        std::string errorMessage = getCommandPrefix(clientSocket) + "PRIVMSG " + target + " :Usage: FILE <target> <filename>\r\n";
+        std::cout << "Sending error message: " << errorMessage << std::endl;
+        send(clientSocket, errorMessage.c_str(), errorMessage.length(), 0);
+        return;
+    }
+
+    std::ifstream file(fileName.c_str(), std::ios::binary);
+    if (!file) {
+        std::string errorMessage = getCommandPrefix(clientSocket) + "PRIVMSG " + target + " :Could not open file\r\n";
+        std::cout << "Sending error message: " << errorMessage << std::endl;
+        send(clientSocket, errorMessage.c_str(), errorMessage.length(), 0);
+        return;
+    }
+
+    std::vector<char> fileData((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    std::cout << "Read " << fileData.size() << " bytes from file: " << fileName << std::endl;
+
+    std::string directory = "./received_files/";
+    mkdir(directory.c_str(), 0777);
+
+    std::string filePath = directory + fileName;
+    std::ofstream outFile(filePath.c_str(), std::ios::binary);
+    if (!outFile) {
+        std::string errorMessage = getCommandPrefix(clientSocket) + "PRIVMSG " + target + " :Could not write file to directory\r\n";
+        std::cout << "Sending error message: " << errorMessage << std::endl;
+        send(clientSocket, errorMessage.c_str(), errorMessage.length(), 0);
+        return;
+    }
+
+    outFile.write(&fileData[0], fileData.size());
+    outFile.close();
+    std::cout << "Stored file at: " << filePath << std::endl;
+
+    std::ostringstream convert;
+    convert << clientSocket;
+    std::string clientSocketStr = convert.str();
+
+    std::string successMessageToSender = getCommandPrefix(clientSocket) + "PRIVMSG " + clientSocketStr + " :File " + fileName + " stored successfully in " + filePath + "\r\n";
+    std::cout << "Sending success message to sender: " << successMessageToSender << std::endl;
+    send(clientSocket, successMessageToSender.c_str(), successMessageToSender.length(), 0);
+
+
+}
+
 void IRCServer::handlePrivmsgCommand(int clientSocket, std::istringstream &lineStream) {
     std::string target;
     lineStream >> target;
     std::string privmsg;
-    getline(lineStream, privmsg); // Extract the remaining message, which should start with ':' indicating the start of the actual message
+    getline(lineStream, privmsg);
 
-    // Format the message properly with the command prefix
     std::string formattedMessage = getCommandPrefix(clientSocket) + "PRIVMSG " + target + " " + privmsg + "\r\n";
 
     if (target[0] == '#') {
-        // Channel message
         if (!isValidChannel(target)) {
             std::string noSuchChannel = getServerReply(ERR_NOSUCHCHANNEL, clientSocket);
             noSuchChannel += " " + target + " :No such channel on ft_irc\r\n";
@@ -47,8 +113,9 @@ void IRCServer::handlePrivmsgCommand(int clientSocket, std::istringstream &lineS
         broadcastMessage(clientSocket, formattedMessage, target);
     } else {
         if (target == "GameBot") {
-			std::cout << "Yeah" << std::endl;
             handleGameCommand(clientSocket, privmsg);
+        } else if (target == "FILE") {
+            handleFileCommand(clientSocket, privmsg.substr(1));
         } else {
             int targetSocket = getClientSocket(target);
             if (targetSocket == -1 || send(targetSocket, formattedMessage.c_str(), formattedMessage.size(), 0) == -1) {

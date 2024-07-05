@@ -6,7 +6,7 @@
 /*   By: albeninc <albeninc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/04 17:26:30 by albeninc          #+#    #+#             */
-/*   Updated: 2024/07/04 18:31:16 by albeninc         ###   ########.fr       */
+/*   Updated: 2024/07/05 15:01:26 by albeninc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -112,6 +112,7 @@ public:
 	Bot Bot_;
     void start();
 	void handleGameCommand(int clientSocket, const std::string& message);
+	void handleFileCommand(int clientSocket, const std::string& message);
 
 private:
 

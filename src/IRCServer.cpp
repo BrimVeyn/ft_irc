@@ -6,7 +6,7 @@
 /*   By: albeninc <albeninc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/04 17:28:06 by albeninc          #+#    #+#             */
-/*   Updated: 2024/07/04 18:38:34 by albeninc         ###   ########.fr       */
+/*   Updated: 2024/07/05 14:54:05 by albeninc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,6 +62,7 @@ IRCServer::IRCServer(int port, const std::string& password)
     commandMap_["TOPIC"] = &IRCServer::handleTopicCommand;
     commandMap_["MODE"] = &IRCServer::handleModeCommand;
     commandMap_["PASS"] = &IRCServer::handlePassCommand;
+
 	//Set available channel modes
 	
 	bancommands_ = "PING-PONG-WHOIS";

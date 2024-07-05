@@ -6,7 +6,7 @@
 /*   By: albeninc <albeninc@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/07/04 14:44:40 by albeninc          #+#    #+#             */
-/*   Updated: 2024/07/04 16:40:51 by albeninc         ###   ########.fr       */
+/*   Updated: 2024/07/05 14:58:13 by albeninc         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -134,8 +134,6 @@ void IRCServer::handleGameCommand(int clientSocket, const std::string& message) 
         command = command.substr(1);
     }
 
-    std::cout << "Trimmed command: " << command << std::endl;
-    
     if (command == "start") {
         Bot_.startNewGame();
         std::ostringstream convert;
